@@ -1,0 +1,25 @@
+name = "flim"
+version = "0.1.0"
+license = "license"
+author = "name"
+maintainer = "email@example.com"
+copyright = "Copyright 2024, name"
+description = "A short description of my project."
+dependencies.openmp = "*"
+dependencies.hdf5 = "*"
+dependencies.netcdf = "*"
+dependencies.blas = "*"
+dependencies.stdlib = "*"
+
+
+[library]
+
+[executable]
+name = "hpc_package"
+source-dir = "app"
+main = "main.f90"
+
+[test]
+name = "check"
+source-dir = "test"
+main = "check.f90"
