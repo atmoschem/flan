@@ -84,11 +84,12 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
     character(len=:), allocatable, intent(out) :: time_col(:)
     real(wp), allocatable, intent(out) :: gas_col(:)
     real(wp), allocatable, intent(out) :: bg_col(:)
-    integer(int32), allocatable, intent(out) :: year_col(:)
-    integer(int32), allocatable, intent(out) :: month_col(:)
-    integer(int32), allocatable, intent(out) :: day_col(:)
-    integer(int32), allocatable, intent(out) :: hour_col(:)
-    integer(int32), allocatable, intent(out) :: minute_col(:)
+    ! Date/time columns are now formatted characters
+    character(len=:), allocatable, intent(out) :: year_col(:)
+    character(len=:), allocatable, intent(out) :: month_col(:)
+    character(len=:), allocatable, intent(out) :: day_col(:)
+    character(len=:), allocatable, intent(out) :: hour_col(:)
+    character(len=:), allocatable, intent(out) :: minute_col(:)
 
     ! Local variables
     integer :: unit_num, io_stat
@@ -100,11 +101,17 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
     integer :: path_idx, time_idx, gas_idx, bg_idx, year_idx, &
                month_idx, day_idx, hour_idx, minute_idx
     
+    ! Temporary variables for reading and formatting
+    integer :: int_year, int_month, int_day, int_hour, int_minute
+    character(len=4) :: char_year
+    character(len=2) :: char_month, char_day, char_hour, char_minute
+
     ! Temporary allocatable arrays for building output
     character(len=512), allocatable :: path_tmp(:), time_tmp(:)
     real(wp), allocatable :: gas_tmp(:), bg_tmp(:)
-    integer(int32), allocatable :: year_tmp(:), month_tmp(:), day_tmp(:), &
-                                   hour_tmp(:), minute_tmp(:)
+    character(len=4), allocatable :: year_tmp(:)
+    character(len=2), allocatable :: month_tmp(:), day_tmp(:), &
+                                     hour_tmp(:), minute_tmp(:)
 
     ! Initialize indices to -1 (not found)
     path_idx = -1; time_idx = -1; gas_idx = -1; bg_idx = -1; year_idx = -1; &
@@ -184,21 +191,28 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
         bg_tmp = [bg_tmp, 0.0_wp] ! Allocate space
         read(data_values(bg_idx), *) bg_tmp(size(bg_tmp))
 
-        ! Append integer data
-        year_tmp = [year_tmp, 0_int32]
-        read(data_values(year_idx), *) year_tmp(size(year_tmp))
+        ! Read integer date/time data
+        read(data_values(year_idx), *) int_year
+        read(data_values(month_idx), *) int_month
+        read(data_values(day_idx), *) int_day
+        read(data_values(hour_idx), *) int_hour
+        read(data_values(minute_idx), *) int_minute
+
+        ! Format as zero-padded strings and append
+        write(char_year, '(i4.4)') int_year
+        year_tmp = [year_tmp, char_year]
         
-        month_tmp = [month_tmp, 0_int32]
-        read(data_values(month_idx), *) month_tmp(size(month_tmp))
-        
-        day_tmp = [day_tmp, 0_int32]
-        read(data_values(day_idx), *) day_tmp(size(day_tmp))
-        
-        hour_tmp = [hour_tmp, 0_int32]
-        read(data_values(hour_idx), *) hour_tmp(size(hour_tmp))
-        
-        minute_tmp = [minute_tmp, 0_int32]
-        read(data_values(minute_idx), *) minute_tmp(size(minute_tmp))
+        write(char_month, '(i2.2)') int_month
+        month_tmp = [month_tmp, char_month]
+
+        write(char_day, '(i2.2)') int_day
+        day_tmp = [day_tmp, char_day]
+
+        write(char_hour, '(i2.2)') int_hour
+        hour_tmp = [hour_tmp, char_hour]
+
+        write(char_minute, '(i2.2)') int_minute
+        minute_tmp = [minute_tmp, char_minute]
         
       else
          print *, "Warning: Skipping malformed line: ", trim(line_buffer)
@@ -220,4 +234,5 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
 
   end subroutine read_csv_obs
 
+  
 end module io_manager
