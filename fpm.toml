@@ -10,7 +10,7 @@ dependencies.hdf5 = "*"
 dependencies.netcdf = "*"
 dependencies.blas = "*"
 dependencies.stdlib = "*"
-
+dependencies.datetime = { git = "https://github.com/wavebitscientific/datetime-fortran" }
 
 [library]
 
