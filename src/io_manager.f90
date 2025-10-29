@@ -2,9 +2,10 @@ module io_manager
   use iso_fortran_env, only: wp => real64
   use netcdf
   use stdlib_string_type, only: string_type
-  use stdlib_strings, only: to_string, strip
+  use stdlib_strings, only: to_string !, strip
   use stdlib_ascii, only: to_lower
   use fpm_strings, only: split    ! 'split' is in fpm_strings
+  use stdlib_error, only: error_stop
   implicit none
   private
  ! CORRECT: Make both subroutines public
@@ -178,7 +179,7 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
       read(unit_num, '(a)', iostat=io_stat) line_buffer
       if (io_stat /= 0) exit data_loop ! Exit on end-of-file or read error
 
-      data_line = to_string(strip(line_buffer))
+      data_line = strip(line_buffer)
       if (len(data_line) == 0) cycle data_loop ! Skip empty lines
       
       call split(',', data_values)
