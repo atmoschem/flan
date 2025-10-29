@@ -1,6 +1,9 @@
 module io_manager
   use iso_fortran_env, only: wp => real64
   use netcdf
+  use stdlib_string_type, only: string_type
+  use stdlib_strings, only: to_string, strip, split 
+  use stdlib_ascii, only: to_lower
   implicit none
   private
  ! CORRECT: Make both subroutines public
@@ -131,7 +134,7 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
     if (io_stat /= 0) call error_stop("Error: Could not read header from file: " // trim(filename))
     
     header_line = to_string(strip(line_buffer))
-    call header_line%split(',', headers)
+    call split(',', headers)
     num_cols = size(headers)
 
     ! 2. Find column indices (case-insensitive)
@@ -177,7 +180,7 @@ subroutine read_csv_obs(filename, path_col, time_col, gas_col, bg_col, &
       data_line = to_string(strip(line_buffer))
       if (len(data_line) == 0) cycle data_loop ! Skip empty lines
       
-      call data_line%split(',', data_values)
+      call split(',', data_values)
 
       if (size(data_values) == num_cols) then
         ! Append string data
