@@ -12,6 +12,7 @@ dependencies.blas = "*"
 dependencies.stdlib =  { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm"}
 dependencies.datetime = { git = "https://github.com/wavebitscientific/datetime-fortran" }
 dependencies.fpm = { git = "https://github.com/fortran-lang/fpm" }
+dependencies.csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 
 [library]
 
