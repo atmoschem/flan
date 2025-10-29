@@ -2,8 +2,9 @@ module io_manager
   use iso_fortran_env, only: wp => real64
   use netcdf
   use stdlib_string_type, only: string_type
-  use stdlib_strings, only: to_string, strip, split 
+  use stdlib_strings, only: to_string, strip
   use stdlib_ascii, only: to_lower
+  use fpm_strings, only: split    ! 'split' is in fpm_strings
   implicit none
   private
  ! CORRECT: Make both subroutines public

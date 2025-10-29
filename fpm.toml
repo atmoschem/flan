@@ -9,10 +9,12 @@ dependencies.openmp = "*"
 dependencies.hdf5 = "*"
 dependencies.netcdf = "*"
 dependencies.blas = "*"
-dependencies.stdlib =  { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm" }
+dependencies.stdlib =  { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm"}
 dependencies.datetime = { git = "https://github.com/wavebitscientific/datetime-fortran" }
+dependencies.fpm = { git = "https://github.com/fortran-lang/fpm" }
 
 [library]
+
 
 [executable]
 name = "hpc_package"
