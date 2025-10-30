@@ -3,7 +3,7 @@ program main
   use linear_algebra, only: invert_matrix
   use io_manager, only: write_matrix_netcdf, read_matrix_netcdf
   ! Import the datetime module
-  use datetime_module, only: datetime_type, now, strftime
+  use datetime_module, only: datetime, datetime_type, now, strftime
   implicit none
 
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
