@@ -92,7 +92,7 @@ contains
     type(datetime) :: a
 
     !Variables to hold data from a row
-    character(len=100) :: path
+    character(len=100), dimension(:), allocatable :: path
     real(wp),dimension(:),allocatable :: gas, bg
     integer,dimension(:),allocatable :: year, month, day, hour, minute
     character(len=100) :: output_filename
@@ -105,7 +105,7 @@ contains
     call csv%get_header(header,at_end)
     call csv%variable_types(itypes,at_end)
 
-    call csv%get_column(1,year,at_end)
+    call csv%get(1,year,at_end)
     call csv%get(2,month,at_end)
     call csv%get(3,day,at_end)
     call csv%get(4,hour,at_end)
@@ -118,7 +118,7 @@ contains
      
     a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0) 
 
-    print *, a 
+    print *, a%isoformat() 
     ! 6. Construct the final filename
 !      output_filename = trim(year_str) // trim(month_str) // trim(day_str) &
 !                      & // "_" // trim(hour_str) // trim(minute_str) // ".nc"
