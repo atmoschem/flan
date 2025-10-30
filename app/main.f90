@@ -2,25 +2,17 @@ program main
   use iso_fortran_env, only: wp => real64
   use linear_algebra, only: invert_matrix
   use io_manager, only: write_matrix_netcdf, read_matrix_netcdf
-  ! Import the datetime module
   use datetime_module, only: datetime
   implicit none
 
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
   character(len=20) :: filename = "matrix_data.nc"
   
-  ! Variables for datetime test
-  type(datetime) :: current_time
-  character(len=100) :: formatted_time
-
-  ! --- Datetime Test ---
-  print '("--- Datetime Test ---")'
-
+! Variables for datetime test
   type(datetime) :: a
-
-  formatted_time = a % now() ! Assigns current machine time to a
-  
-  print '("Current time is: ", A)', trim(formatted_time)
+  print '("--- Datetime Test ---")'
+  a = a % now()
+  print *, a % isoformat()
 
   !
   ! Generate a sample matrix and invert it
