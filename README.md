@@ -1,4 +1,4 @@
-# Fortran LAgrangiaN Inverse Model (FLAN)
+# Fortran LagrangiAN Inverse Model (FLAN)
 My cool new project!
 
 

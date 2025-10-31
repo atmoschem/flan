@@ -81,8 +81,8 @@ contains
 
 
 ! --- Example CSV Reader using csv-fortran ---
-  subroutine example_csv_reader(filename)
-    character(len=*), intent(in) :: filename
+  subroutine example_csv_reader(csvname)
+    character(len=*), intent(in) :: csvname
     type(csv_file) :: csv
     character(len=30),dimension(:),allocatable :: header
     logical :: at_end
@@ -99,7 +99,7 @@ contains
     integer, dimension(:), allocatable :: itypes
 
 
-    call csv%read('receptors/receptor.csv',header_row=1,status_ok=at_end)
+    call csv%read(csvname,header_row=1,status_ok=at_end)
 
     ! get the header and type info
     call csv%get_header(header,at_end)

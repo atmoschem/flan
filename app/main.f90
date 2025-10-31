@@ -5,12 +5,16 @@ program main
   use datetime_module, only: datetime
   implicit none
 
+
+
+
+
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
   character(len=20) :: filename = "matrix_data.nc"
   
 ! Variables for datetime test
   type(datetime) :: a
-fpm  print '("--- Datetime Test ---")'
+  print *, '("--- Datetime Test ---")'
   a = a % now()
   print *, a % isoformat()
 
