@@ -5,6 +5,10 @@ program main
   use datetime_module, only: datetime
   implicit none
 
+
+
+  ! 1. Read receptors from CSV file using io_manager's example_csv_reader
+  call example_csv_reader('receptors/receptor.csv')
   ! --- Namelist Variables (with defaults) ---
   logical :: run_datetime_test = .true.
   logical :: run_netcdf_test   = .true.
@@ -15,10 +19,7 @@ program main
   ! This group 'flan_config' will be read from the config file
   namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
 
-  ! --- Variables for tests ---
-  real(wp) :: matrix_out(3,3), matrix_in(3,3)
-  type(datetime) :: a
-  
+
   ! --- Read Configuration Namelist ---
   print *, "Reading configuration from 'namelists/config.nml'..."
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
@@ -37,6 +38,8 @@ program main
   print *, "Configuration loaded."
 
   ! --- 1. Conditional Datetime Test ---
+  type(datetime) :: a
+
   if (run_datetime_test) then
     print *, '("--- Datetime Test ---")'
     a = a % now()
@@ -46,6 +49,8 @@ program main
   end if
 
   ! --- 2. Conditional NetCDF I/O Test ---
+  real(wp) :: matrix_out(3,3), matrix_in(3,3)
+ 
   if (run_netcdf_test) then
     print '("--- NetCDF I/O Test ---")'
     
