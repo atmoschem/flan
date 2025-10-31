@@ -5,22 +5,10 @@ program main
   use datetime_module, only: datetime
   implicit none
 
-
-
-  ! 1. Read receptors from CSV file using io_manager's example_csv_reader
-  call example_csv_reader('receptors/receptor.csv')
-  ! --- Namelist Variables (with defaults) ---
-  logical :: run_datetime_test = .true.
-  logical :: run_netcdf_test   = .true.
-  character(len=100) :: netcdf_filename = "matrix_data.nc"
   integer :: ios ! For I/O status
 
-  ! --- Namelist Group Definition ---
-  ! This group 'flan_config' will be read from the config file
-  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
 
-
-  ! --- Read Configuration Namelist ---
+  !1 --- Read Configuration Namelist ---
   print *, "Reading configuration from 'namelists/config.nml'..."
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
 
@@ -35,6 +23,37 @@ program main
     close(10)
   end if
   
+
+
+  ! 2. Read receptors from CSV file using io_manager's example_csv_reader
+  print *, "Reading receptors from receptors from namelist..."
+  namelist /receptor_config/ receptor_filename
+  
+  character(len=100), dimension(:), allocatable :: receptor_path
+  real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
+  integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
+                                        receptor_hour, receptor_minute, receptor_second
+
+  a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0)
+
+
+  call example_csv_reader(receptor_filename, &
+                          receptor_year, receptor_month, receptor_day, &
+                          receptor_hour, receptor_minute, receptor_second, &
+                          receptor_path, receptor_gas, receptor_bg)       
+
+
+  ! --- Namelist Variables (with defaults) ---
+  logical :: run_datetime_test = .true.
+  logical :: run_netcdf_test   = .true.
+  character(len=100) :: netcdf_filename = "matrix_data.nc"
+
+  ! --- Namelist Group Definition ---
+  ! This group 'flan_config' will be read from the config file
+  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
+
+
+
   print *, "Configuration loaded."
 
   ! --- 1. Conditional Datetime Test ---

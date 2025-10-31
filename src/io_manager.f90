@@ -81,23 +81,24 @@ contains
 
 
 ! --- Example CSV Reader using csv-fortran ---
-  subroutine example_csv_reader(csvname)
+subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, path, gas, bg)
     character(len=*), intent(in) :: csvname
+
+! These are now output arguments
+    integer, dimension(:), allocatable, intent(out) :: year, month, day, hour, minute, second
+    character(len=100), dimension(:), allocatable, intent(out) :: path
+    real(wp), dimension(:), allocatable, intent(out) :: gas, bg
+
     type(csv_file) :: csv
     character(len=30),dimension(:),allocatable :: header
     logical :: at_end
-    integer :: i, ierr
-    
-    ! type time
+    integer :: i, ierr, num_records
+
+    ! time
     type(datetime) :: a
 
-    !Variables to hold data from a row
-    character(len=100), dimension(:), allocatable :: path
-    real(wp),dimension(:),allocatable :: gas, bg
-    integer,dimension(:),allocatable :: year, month, day, hour, minute
     character(len=100) :: output_filename
     integer, dimension(:), allocatable :: itypes
-
 
     call csv%read(csvname,header_row=1,status_ok=at_end)
 
@@ -110,19 +111,32 @@ contains
     call csv%get(3,day,at_end)
     call csv%get(4,hour,at_end)
     call csv%get(5,minute,at_end)
-    call csv%get(6,path,at_end)
-    call csv%get(7,gas,at_end)
-    call csv%get(8,bg,at_end)
+    call csv%get(6,second,at_end)
+    call csv%get(7,path,at_end)
+    call csv%get(8,gas,at_end)
+    call csv%get(9,bg,at_end)
+
+    ! Get the number of records read
+    num_records = size(year)
 
     call csv%destroy()
-     
-    a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0) 
 
-    print *, a%isoformat() 
+    ! add routine that reads footprints from CSV files
+
+    ! add routine that reads emissions from CSV files
+
+    ! add routine that convolves and returns results
+
+    ! This part just prints the datetime of the first record
+    if (num_records > 0) then
+        a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0)
+        print *, "First receptor time: ", a%isoformat()
+    end if
+     
     ! 6. Construct the final filename
-!      output_filename = trim(year_str) // trim(month_str) // trim(day_str) &
-!                      & // "_" // trim(hour_str) // trim(minute_str) // ".nc"
-                      
+!    output_filename = trim(year_str) // trim(month_str) // trim(day_str) &
+!                      // "_" // trim(hour_str) // trim(minute_str) // ".nc"
+
     end subroutine example_csv_reader
 
 end module io_manager

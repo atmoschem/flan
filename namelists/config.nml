@@ -3,3 +3,11 @@
   run_netcdf_test   = .true.
   netcdf_filename   = "my_output_file.nc"
 /
+
+&receptor_config
+  receptor_filename   = 'receptors/receptor.csv'
+/
+
+&prior_config
+  prior_path   = 'path'
+/
