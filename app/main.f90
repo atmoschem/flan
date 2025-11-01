@@ -7,28 +7,32 @@ program main
 
   integer :: ios ! For I/O status
 
+! --- Namelist Variables (with defaults) ---
+  logical :: run_datetime_test = .true.
+  logical :: run_netcdf_test   = .true.
+  character(len=100) :: netcdf_filename = "matrix_data.nc"
+  character(len=100) :: receptor_filename = "receptors.csv"
 
-  !1 --- Read Configuration Namelist ---
+  ! 1 --- Namelist declarations ---
+  namelist /receptor_config/ receptor_filename
+  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
+
   print *, "Reading configuration from 'namelists/config.nml'..."
+  
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
 
   if (ios /= 0) then
     print *, "Warning: Could not open 'namelists/config.nml'. Using default values."
   else
     ! Read the namelist group
-    read(unit=10, nml=flan_config, iostat=ios)
+    read(unit=10, nml=receptor_config, iostat=ios)
     if (ios /= 0) then
       print *, "Warning: Error reading namelist. Using defaults."
     end if
     close(10)
   end if
-  
 
-
-  ! 2. Read receptors from CSV file using io_manager's example_csv_reader
-  print *, "Reading receptors from receptors from namelist..."
-  namelist /receptor_config/ receptor_filename
-  
+! 2 --- Receptors ---
   character(len=100), dimension(:), allocatable :: receptor_path
   real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
   integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
@@ -43,14 +47,9 @@ program main
                           receptor_path, receptor_gas, receptor_bg)       
 
 
-  ! --- Namelist Variables (with defaults) ---
-  logical :: run_datetime_test = .true.
-  logical :: run_netcdf_test   = .true.
-  character(len=100) :: netcdf_filename = "matrix_data.nc"
 
   ! --- Namelist Group Definition ---
   ! This group 'flan_config' will be read from the config file
-  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
 
 
 
