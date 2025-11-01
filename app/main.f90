@@ -13,10 +13,24 @@ program main
   character(len=100) :: netcdf_filename = "matrix_data.nc"
   character(len=100) :: receptor_filename = "receptors.csv"
 
+
+  character(len=100), dimension(:), allocatable :: receptor_path
+  real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
+  integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
+                                        receptor_hour, receptor_minute, receptor_second
+
+
+  type(datetime) :: a
+
+  ! --- NetCDF I/O Test Variables (MOVED HERE) ---
+  real(wp) :: matrix_out(3,3), matrix_in(3,3)
+
   ! 1 --- Namelist declarations ---
   namelist /receptor_config/ receptor_filename
   namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
 
+
+! --- START OF EXECUTABLE CODE ---
   print *, "Reading configuration from 'namelists/config.nml'..."
   
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
@@ -32,31 +46,15 @@ program main
     close(10)
   end if
 
-! 2 --- Receptors ---
-  character(len=100), dimension(:), allocatable :: receptor_path
-  real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
-  integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
-                                        receptor_hour, receptor_minute, receptor_second
-
-  a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0)
-
-
+  ! 2 --- Receptors ---
+  ! --- The bad line "a = datetime(...)" has been REMOVED from here ---
   call example_csv_reader(receptor_filename, &
                           receptor_year, receptor_month, receptor_day, &
                           receptor_hour, receptor_minute, receptor_second, &
                           receptor_path, receptor_gas, receptor_bg)       
 
-
-
-  ! --- Namelist Group Definition ---
-  ! This group 'flan_config' will be read from the config file
-
-
-
   print *, "Configuration loaded."
 
-  ! --- 1. Conditional Datetime Test ---
-  type(datetime) :: a
 
   if (run_datetime_test) then
     print *, '("--- Datetime Test ---")'
@@ -67,7 +65,6 @@ program main
   end if
 
   ! --- 2. Conditional NetCDF I/O Test ---
-  real(wp) :: matrix_out(3,3), matrix_in(3,3)
  
   if (run_netcdf_test) then
     print '("--- NetCDF I/O Test ---")'
