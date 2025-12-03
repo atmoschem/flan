@@ -10,11 +10,11 @@ program main
 ! --- Namelist Variables (with defaults) ---
   logical :: run_datetime_test = .true.
   logical :: run_netcdf_test   = .true.
-  character(len=100) :: netcdf_filename = "matrix_data.nc"
-  character(len=100) :: receptor_filename = "receptors.csv"
+  character(len=256) :: netcdf_filename = "matrix_data.nc"
+  character(len=256) :: receptor_filename = "receptors.csv"
 
 
-  character(len=100), dimension(:), allocatable :: receptor_path
+  character(len=256), dimension(:), allocatable :: receptor_path
   real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
   integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
                                         receptor_hour, receptor_minute, receptor_second

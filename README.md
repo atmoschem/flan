@@ -249,7 +249,8 @@ flan                                   done.
 ## run
 
 ```
-found blas package: openblas
+fpm run
+ found blas package: openblas
 Project is up to date
  Reading configuration from 'namelists/config.nml'...
  Reading CSV file: receptors/receptor_1h.csv
@@ -259,17 +260,17 @@ Project is up to date
    Time:         2024           9          17           7           0           0
    Gas:    10.100000000000000     
    Bg:    2.0200000000000000     
-   Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.
+   Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc                                                                                                                                    
  Last Record:
    Time:         2024           9          17           7           0           0
    Gas:    3.2000000000000002     
    Bg:   0.64000000000000001     
-   Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.
+   Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
  -------------------
  First receptor time object: 2024-09-17T07:00:00.000
  Configuration loaded.
  ("--- Datetime Test ---")
- 2025-12-02T19:01:48.578
+ 2025-12-02T20:49:09.646
 --- NetCDF I/O Test ---
 Writing inverted matrix to file: matrix_data.nc
 Reading matrix from file...

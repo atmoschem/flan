@@ -86,7 +86,7 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
 
 ! These are now output arguments
     integer, dimension(:), allocatable, intent(out) :: year, month, day, hour, minute, second
-    character(len=100), dimension(:), allocatable, intent(out) :: path
+    character(len=256), dimension(:), allocatable, intent(out) :: path
     real(wp), dimension(:), allocatable, intent(out) :: gas, bg
 
     type(csv_file) :: csv
