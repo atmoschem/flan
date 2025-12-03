@@ -53,6 +53,8 @@ program main
                           receptor_hour, receptor_minute, receptor_second, &
                           receptor_path, receptor_gas, receptor_bg)       
 
+  print *, receptor_year
+
   print *, "Configuration loaded."
 
 

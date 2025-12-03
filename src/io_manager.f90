@@ -128,12 +128,6 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
 
     call csv%destroy()
 
-    ! add routine that reads footprints from CSV files
-
-    ! add routine that reads emissions from CSV files
-
-    ! add routine that convolves and returns results
-
     ! This part just prints the datetime of the first record
     if (num_records > 0) then
         print *, "--- CSV Summary ---"
