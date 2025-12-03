@@ -8,6 +8,12 @@
   receptor_filename   = 'receptors/receptor_1h.csv'
 /
 
+&footprint_config
+  foot_lat   = 'foot1lat'
+  foot_lon   = 'foot1lon'
+  foot_name = 'foot1'
+/
+
 &prior_config
-  prior_path   = 'path'
+  prior_path   = '/media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc'
 /
