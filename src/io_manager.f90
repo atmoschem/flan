@@ -322,7 +322,6 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
         print *, "  Gas: ", gas(num_records)
         print *, "  Bg: ", bg(num_records)
         print *, "  Path: ", path(num_records)
-        print *, "-------------------"
 
         a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0)
         print *, "First receptor time object: ", a%isoformat()

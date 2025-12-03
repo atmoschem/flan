@@ -251,6 +251,8 @@ flan                                   done.
 ```
 fpm run
  found blas package: openblas
+io_manager.f90                         done.
+libflan.a                              done.
 main.f90                               done.
 flan                                   done.
 [100%] Project compiled successfully.
@@ -275,8 +277,8 @@ flan                                   done.
    Gas:    3.2000000000000002     
    Bg:   0.64000000000000001     
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
- -------------------
  First receptor time object: 2024-09-17T07:00:00.000
+ ---------------------------------------------------
  Reading footprints
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
@@ -287,7 +289,7 @@ flan                                   done.
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
  ---------------------------------------------------
  ("--- Datetime Test ---")
- 2025-12-02T23:47:56.527
+ 2025-12-02T23:51:07.786
 --- NetCDF I/O Test ---
 Writing inverted matrix to file: matrix_data.nc
 Reading matrix from file...

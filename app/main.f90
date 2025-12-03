@@ -75,6 +75,8 @@ program main
                           receptor_path, receptor_gas, receptor_bg)       
 
 
+  print *, "---------------------------------------------------"
+  
   ! 4 Footprints
     print *, "Reading footprints"
 
