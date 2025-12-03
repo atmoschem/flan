@@ -5,7 +5,7 @@
 /
 
 &receptor_config
-  receptor_filename   = 'receptors/receptor.csv'
+  receptor_filename   = 'receptors/receptor_1h.csv'
 /
 
 &prior_config

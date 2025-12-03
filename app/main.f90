@@ -1,7 +1,7 @@
 program main
   use iso_fortran_env, only: wp => real64
   use linear_algebra, only: invert_matrix
-  use io_manager, only: write_matrix_netcdf, read_matrix_netcdf
+  use io_manager, only: write_matrix_netcdf, read_matrix_netcdf, example_csv_reader
   use datetime_module, only: datetime
   implicit none
 

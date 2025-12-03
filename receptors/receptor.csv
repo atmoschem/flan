@@ -1,6 +1,6 @@
 year,month,day,hour,minute,path,gas,bg
 2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc,10.1,2.02
-2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc,0,0
+2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc,5.63333333333333,1.12666666666667
 2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x39.9128Nx105.1886Wx00002/hysplit2024x09x17x07x00x39.9128Nx105.1886Wx00002.nc,1.2,0.24
 2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x39.7795Nx105.0052Wx00002/hysplit2024x09x17x07x00x39.7795Nx105.0052Wx00002.nc,4.3,0.86
 2024,9,17,7,0,/work2/noaa/co2/sibarrae/libfootprints/denver_vm0_dkb7_gfs_i2/2024/09/tmp_2024x09x17x07x00x39.8381Nx104.9498Wx00002/hysplit2024x09x17x07x00x39.8381Nx104.9498Wx00002.nc,7.6,1.52

@@ -100,6 +100,8 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
     character(len=100) :: output_filename
     integer, dimension(:), allocatable :: itypes
 
+    print *, "Reading CSV file: ", trim(csvname)
+
     call csv%read(csvname,header_row=1,status_ok=at_end)
 
     ! get the header and type info
@@ -111,13 +113,18 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
     call csv%get(3,day,at_end)
     call csv%get(4,hour,at_end)
     call csv%get(5,minute,at_end)
-    call csv%get(6,second,at_end)
-    call csv%get(7,path,at_end)
-    call csv%get(8,gas,at_end)
-    call csv%get(9,bg,at_end)
+    ! second is not in CSV
+    call csv%get(6,path,at_end)
+    call csv%get(7,gas,at_end)
+    call csv%get(8,bg,at_end)
 
     ! Get the number of records read
     num_records = size(year)
+
+    ! Allocate and initialize second
+    allocate(second(num_records))
+    second = 0
+
 
     call csv%destroy()
 
@@ -129,8 +136,24 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
 
     ! This part just prints the datetime of the first record
     if (num_records > 0) then
+        print *, "--- CSV Summary ---"
+        print *, "Total records: ", num_records
+        print *, "First Record:"
+        print *, "  Time: ", year(1), month(1), day(1), hour(1), minute(1), second(1)
+        print *, "  Gas: ", gas(1)
+        print *, "  Bg: ", bg(1)
+        print *, "  Path: ", path(1)
+
+        print *, "Last Record:"
+        print *, "  Time: ", year(num_records), month(num_records), day(num_records), &
+                             hour(num_records), minute(num_records), second(num_records)
+        print *, "  Gas: ", gas(num_records)
+        print *, "  Bg: ", bg(num_records)
+        print *, "  Path: ", path(num_records)
+        print *, "-------------------"
+
         a = datetime(year(1), month(1), day(1), hour(1), minute(1), 0)
-        print *, "First receptor time: ", a%isoformat()
+        print *, "First receptor time object: ", a%isoformat()
     end if
      
     ! 6. Construct the final filename
