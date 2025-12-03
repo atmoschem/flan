@@ -46,7 +46,7 @@ program main
   namelist /prior_config/ prior_path
 
 
-! --- START OF EXECUTABLE CODE ---
+  print *, "---------------------------------------------------"
   print *, "Reading configuration from 'namelists/config.nml'..."
   
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
@@ -66,7 +66,8 @@ program main
   print *, "Prior NetCDF filename: " // prior_path
 
   close(10)
-
+  print *, "---------------------------------------------------"
+  
   ! 2 --- Receptors ---
   call example_csv_reader(receptor_filename, &
                           receptor_year, receptor_month, receptor_day, &
@@ -93,7 +94,8 @@ program main
     ! print *, "h (", size(h, 1), ",", size(h, 2), ")"
 
 
-
+  print *, "---------------------------------------------------"
+  
 
   if (run_datetime_test) then
     print *, '("--- Datetime Test ---")'

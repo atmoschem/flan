@@ -251,13 +251,17 @@ flan                                   done.
 ```
 fpm run
  found blas package: openblas
-Project is up to date
+main.f90                               done.
+flan                                   done.
+[100%] Project compiled successfully.
+ ---------------------------------------------------
  Reading configuration from 'namelists/config.nml'...
  Receptor filename: receptors/receptor_1h.csv                                                                                                                                                                                                                                       
  Footprint lat name: foot1lat                                                                                                                                                                                                                                                        
  Footprint lon name: foot1lon                                                                                                                                                                                                                                                        
  Footprint name: foot1                                                                                                                                                                                                                                                           
  Prior NetCDF filename: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc                                                                                                                                                                                                               
+ ---------------------------------------------------
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
  Total records:            7
@@ -281,8 +285,9 @@ Project is up to date
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.8381Nx104.9498Wx00002/hysplit2024x09x17x07x00x39.8381Nx104.9498Wx00002.nc
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7322Nx105.0153Wx00002/hysplit2024x09x17x07x00x39.7322Nx105.0153Wx00002.nc
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
+ ---------------------------------------------------
  ("--- Datetime Test ---")
- 2025-12-02T23:42:20.260
+ 2025-12-02T23:47:56.527
 --- NetCDF I/O Test ---
 Writing inverted matrix to file: matrix_data.nc
 Reading matrix from file...
