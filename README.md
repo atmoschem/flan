@@ -253,6 +253,11 @@ fpm run
  found blas package: openblas
 Project is up to date
  Reading configuration from 'namelists/config.nml'...
+ Receptor filename: receptors/receptor_1h.csv                                                                                                                                                                                                                                       
+ Footprint lat name: foot1lat                                                                                                                                                                                                                                                        
+ Footprint lon name: foot1lon                                                                                                                                                                                                                                                        
+ Footprint name: foot1                                                                                                                                                                                                                                                           
+ Prior NetCDF filename: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc                                                                                                                                                                                                               
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
  Total records:            7
@@ -268,9 +273,16 @@ Project is up to date
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
  -------------------
  First receptor time object: 2024-09-17T07:00:00.000
- Configuration loaded.
+ Reading footprints
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.9128Nx105.1886Wx00002/hysplit2024x09x17x07x00x39.9128Nx105.1886Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7795Nx105.0052Wx00002/hysplit2024x09x17x07x00x39.7795Nx105.0052Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.8381Nx104.9498Wx00002/hysplit2024x09x17x07x00x39.8381Nx104.9498Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7322Nx105.0153Wx00002/hysplit2024x09x17x07x00x39.7322Nx105.0153Wx00002.nc
+ /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
  ("--- Datetime Test ---")
- 2025-12-02T20:49:09.646
+ 2025-12-02T23:42:20.260
 --- NetCDF I/O Test ---
 Writing inverted matrix to file: matrix_data.nc
 Reading matrix from file...
