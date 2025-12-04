@@ -16,4 +16,5 @@
 
 &prior_config
   prior_path   = '/media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc'
+  prior_name = 'co2_nmolm2s_denver_240'
 /

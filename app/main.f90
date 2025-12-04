@@ -24,9 +24,13 @@ program main
   character(len=256) :: foot_lon = "foot1lon"
   character(len=256) :: foot_name = "foot1"
   character(len=256) :: prior_path = "prior.nc"
+  character(len=256) :: prior_name = "prior"
+
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
   real(wp), dimension(:), allocatable :: lats, lons
+  real(wp), dimension(:,:,:), allocatable :: prior_in
+  real(wp), dimension(:), allocatable :: hsp
 
   character(len=256), dimension(:), allocatable :: receptor_path
   real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
@@ -43,8 +47,7 @@ program main
   namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
   namelist /receptor_config/ receptor_filename
   namelist /footprint_config/ foot_lat, foot_lon, foot_name
-  namelist /prior_config/ prior_path
-
+  namelist /prior_config/ prior_path, prior_name
 
   print *, "---------------------------------------------------"
   print *, "Reading configuration from 'namelists/config.nml'..."
@@ -77,8 +80,28 @@ program main
 
   print *, "---------------------------------------------------"
   
+  ! 3 --- Footprints ---
+  print *, "Reading prior"
+  ! TODO: Make a function to read the prior
+  ! based on the time in the footprint.
+  ! In this case, I'm using annual emissions
+  ! But in case of monthly, daily or hourly
+  ! emissions, it may be different
+  call read_3d_netcdf(prior_path, prior_in, prior_name)
+  
+  print *, "Prior shape: ", shape(prior_in)
+  print *, "Prior sum: ", sum(prior_in)
+
+  print *, "---------------------------------------------------"
+
   ! 4 Footprints
-    print *, "Reading footprints"
+  print *, "Reading footprints"
+
+  if (allocated(hsp)) deallocate(hsp)
+
+  allocate(hsp(size(receptor_path)))
+
+  hsp = 0.0_wp
 
     do i = 1, size(receptor_path)
 
@@ -89,16 +112,26 @@ program main
        call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
        call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
 
-!       h(i, :) =  reshape(foot_in, [size(lons)* size(lats)])
+       if (any(shape(foot_in) /= shape(prior_in))) then
+         print *, "ERROR: Dimension mismatch between Footprint and Prior!"
+         print *, "Foot: ", shape(foot_in)
+         print *, "Prior: ", shape(prior_in)
+         stop
+       end if
+
+      hsp(i) = sum(foot_in * prior_in)
 
     end do
-    ! TODO: Add integer-to-string conversion function
-    ! print *, "h (", size(h, 1), ",", size(h, 2), ")"
 
-
+  ! 5 hsp
   print *, "---------------------------------------------------"
-  
+  print *, "Enhancements"
+  do i = 1, size(receptor_path)
+      print *, i, ": ", hsp(i)
+  end do
 
+! 6 date time
+  print *, "---------------------------------------------------"
   if (run_datetime_test) then
     print *, '("--- Datetime Test ---")'
     a = a % now()
@@ -107,8 +140,8 @@ program main
     print *, "Skipping Datetime Test."
   end if
 
-  ! --- 2. Conditional NetCDF I/O Test ---
- 
+! 7 netcdf
+  print *, "---------------------------------------------------"
   if (run_netcdf_test) then
     print '("--- NetCDF I/O Test ---")'
     
