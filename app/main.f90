@@ -18,6 +18,7 @@ program main
 ! --- Namelist Variables (with defaults) ---
   logical :: run_datetime_test = .true.
   logical :: run_netcdf_test   = .true.
+  logical :: add_bg   = .true.
   character(len=256) :: netcdf_filename = "matrix_data.nc"
   character(len=256) :: receptor_filename = "receptors.csv"
   character(len=256) :: foot_lat = "foot1lat"
@@ -25,6 +26,7 @@ program main
   character(len=256) :: foot_name = "foot1"
   character(len=256) :: prior_path = "prior.nc"
   character(len=256) :: prior_name = "prior"
+  character(len=256) :: prior_gas = "gas"
 
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
@@ -44,10 +46,10 @@ program main
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
 
   ! 1 --- Namelist declarations ---
-  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename
+  namelist /flan_config/ run_datetime_test, run_netcdf_test, netcdf_filename, add_bg
   namelist /receptor_config/ receptor_filename
   namelist /footprint_config/ foot_lat, foot_lon, foot_name
-  namelist /prior_config/ prior_path, prior_name
+  namelist /prior_config/ prior_path, prior_name, prior_gas
 
   print *, "---------------------------------------------------"
   print *, "Reading configuration from 'namelists/config.nml'..."
@@ -55,6 +57,9 @@ program main
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
 
  ! Read the namelist group
+  read(unit=10, nml=flan_config, iostat=ios)
+  rewind(10)
+
   read(unit=10, nml=receptor_config, iostat=ios)
   print *, "Receptor filename: " // receptor_filename
 
@@ -125,10 +130,20 @@ program main
 
   ! 5 hsp
   print *, "---------------------------------------------------"
-  print *, "Enhancements"
+  print *, "Enhancements " // trim(prior_gas) // " (ppb)"
   do i = 1, size(receptor_path)
-      print *, i, ": ", hsp(i)
+    write(*, '(I4, A, F15.5)') i, " : ", hsp(i)
   end do
+
+! 6 background
+
+  print *, "---------------------------------------------------"
+  if (add_bg) then
+    print *, 'Adding background'
+    hsp = hsp + receptor_bg
+  else
+    print *, "Skipping background."
+  end if
 
 ! 6 date time
   print *, "---------------------------------------------------"
