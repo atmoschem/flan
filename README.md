@@ -251,8 +251,6 @@ flan                                   done.
 ```
 fpm run
  found blas package: openblas
-io_manager.f90                         done.
-libflan.a                              done.
 main.f90                               done.
 flan                                   done.
 [100%] Project compiled successfully.
@@ -279,6 +277,10 @@ flan                                   done.
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
  First receptor time object: 2024-09-17T07:00:00.000
  ---------------------------------------------------
+ Reading prior
+ Prior shape:           25          20         240
+ Prior sum:    152436660.70426941     
+ ---------------------------------------------------
  Reading footprints
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
@@ -288,10 +290,22 @@ flan                                   done.
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7322Nx105.0153Wx00002/hysplit2024x09x17x07x00x39.7322Nx105.0153Wx00002.nc
  /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
  ---------------------------------------------------
+ Enhancements co2 (ppb)
+   1 :      3468.28477
+   2 :         0.00000
+   3 :        47.05454
+   4 :      2402.17249
+   5 :      3661.73907
+   6 :      1386.99579
+   7 :         0.00000
+ ---------------------------------------------------
+ Skipping background.
+ ---------------------------------------------------
  ("--- Datetime Test ---")
- 2025-12-02T23:51:07.786
+ 2025-12-03T23:10:56.060
+ ---------------------------------------------------
 --- NetCDF I/O Test ---
-Writing inverted matrix to file: matrix_data.nc
+Writing inverted matrix to file: my_output_file.nc
 Reading matrix from file...
 SUCCESS: Data read back matches data written.
 ```
