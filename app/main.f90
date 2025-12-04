@@ -4,7 +4,7 @@ program main
   use linear_algebra, only: invert_matrix
   use io_manager, only: write_1d_netcdf, write_2d_netcdf, &
   &write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, &
-  &read_3d_netcdf, example_csv_reader
+  &read_3d_netcdf, example_csv_reader, logical_to_string
   use datetime_module, only: datetime
   implicit none
 
@@ -57,21 +57,24 @@ program main
   open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
 
  ! Read the namelist group
-  read(unit=10, nml=flan_config, iostat=ios)
-  rewind(10)
-
   read(unit=10, nml=receptor_config, iostat=ios)
-  print *, "Receptor filename: " // receptor_filename
+  print *, "receptor_config: " // trim(receptor_filename)
 
   rewind(10)
   read(10, nml=footprint_config, iostat=ios)
-  print *, "Footprint lat name: " // foot_lat
-  print *, "Footprint lon name: " // foot_lon
-  print *, "Footprint name: " // foot_name
+  print *, "footprint_config: Footprint lat name: " // trim(foot_lat)
+  print *, "footprint_config: Footprint lon name: " // trim(foot_lon)
+  print *, "footprint_config: Footprint name: " // trim(foot_name)
 
   rewind(10)
   read(10, nml=prior_config, iostat=ios)
-  print *, "Prior NetCDF filename: " // prior_path
+  print *, "prior_config: Prior NetCDF filename: " // trim(prior_path)
+  print *, "prior_config: prior_name: " // trim(prior_name)
+  print *, "prior_config: prior_gas: " // trim(prior_gas)
+
+  rewind(10)
+  read(unit=10, nml=flan_config, iostat=ios)
+  print *, "flan_config: add_bg: " // logical_to_string(add_bg) 
 
   close(10)
   print *, "---------------------------------------------------"

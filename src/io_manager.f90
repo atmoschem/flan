@@ -9,6 +9,7 @@ module io_manager
   ! CORRECT: Make both subroutines public
   public :: write_1d_netcdf, write_2d_netcdf, write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, read_3d_netcdf
   public :: example_csv_reader
+  public :: logical_to_string
 
 contains
 
@@ -332,5 +333,15 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
 !                      // "_" // trim(hour_str) // trim(minute_str) // ".nc"
 
     end subroutine example_csv_reader
+    
+    function logical_to_string(l) result(s)
+      logical, intent(in) :: l
+      character(len=5) :: s
+      if (l) then
+        s = "true"
+      else
+        s = "false"
+      end if
+    end function logical_to_string
 
 end module io_manager

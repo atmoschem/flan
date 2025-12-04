@@ -251,16 +251,17 @@ flan                                   done.
 ```
 fpm run
  found blas package: openblas
-main.f90                               done.
-flan                                   done.
-[100%] Project compiled successfully.
+Project is up to date
  ---------------------------------------------------
  Reading configuration from 'namelists/config.nml'...
- Receptor filename: receptors/receptor_1h.csv                                                                                                                                                                                                                                       
- Footprint lat name: foot1lat                                                                                                                                                                                                                                                        
- Footprint lon name: foot1lon                                                                                                                                                                                                                                                        
- Footprint name: foot1                                                                                                                                                                                                                                                           
- Prior NetCDF filename: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc                                                                                                                                                                                                               
+ receptor_config: receptors/receptor_1h.csv
+ footprint_config: Footprint lat name: foot1lat
+ footprint_config: Footprint lon name: foot1lon
+ footprint_config: Footprint name: foot1
+ prior_config: Prior NetCDF filename: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc
+ prior_config: prior_name: co2_nmolm2s_denver_240
+ prior_config: prior_gas: co2
+ flan_config: add_bg: false
  ---------------------------------------------------
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
@@ -302,7 +303,7 @@ flan                                   done.
  Skipping background.
  ---------------------------------------------------
  ("--- Datetime Test ---")
- 2025-12-03T23:10:56.060
+ 2025-12-03T23:26:53.680
  ---------------------------------------------------
 --- NetCDF I/O Test ---
 Writing inverted matrix to file: my_output_file.nc
