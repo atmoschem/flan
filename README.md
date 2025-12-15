@@ -34,6 +34,19 @@ Also, it will download and compile
 - fpm extra functions including strings
 - csv-fortran, to read csv files
 
+## Installation
+
+fpm needs access to libraries above mentioned. For instance, for an HPC, you could:
+
+```bash
+module load slurm
+module load netcdf-c
+module load netcdf-fortran
+module load hdf5/1.14.3
+module load openblas
+```
+then
+
 ## build
 
 fpm build
