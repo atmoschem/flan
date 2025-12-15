@@ -54,7 +54,7 @@ program main
   print *, "---------------------------------------------------"
   print *, "Reading configuration from 'namelists/config.nml'..."
   
-  open(unit=10, file="namelists/config.nml", status="old", action="read", iostat=ios)
+  open(unit=10, file="namelists/config_hercules.nml", status="old", action="read", iostat=ios)
 
  ! Read the namelist group
   read(unit=10, nml=receptor_config, iostat=ios)

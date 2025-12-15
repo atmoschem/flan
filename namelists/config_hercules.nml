@@ -1,0 +1,23 @@
+
+&receptor_config
+  receptor_filename   = '/work2/noaa/co2/sibarrae/denver/receptors.csv'
+/
+
+&footprint_config
+  foot_lat   = 'foot1lat'
+  foot_lon   = 'foot1lon'
+  foot_name = 'foot1'
+/
+
+&prior_config
+  prior_path   = '/work2/noaa/lpdm/sibarrae/fluxes/vulcan4/co2_denver_nmolm2s1_240.nc'
+  prior_name = 'co2_denver_nmolm2s1_240'
+  prior_gas   = 'co2'
+
+/
+&flan_config
+  add_bg = .false.
+  run_datetime_test = .true.
+  run_netcdf_test   = .true.
+  netcdf_filename   = "my_output_file.nc"
+/
