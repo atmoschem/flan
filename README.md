@@ -2,7 +2,7 @@
 My cool new project!
 
 
-![](figs/logo.jpg)
+![](figs/logo2.png)
 #TODO EVERYTHING
 
 Cool thing, it is an [fpm](https://fpm.fortran-lang.org/index.html) project that already compiles with
