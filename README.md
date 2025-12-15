@@ -2,7 +2,8 @@
 My cool new project!
 
 
-![](figs/logo2.png)
+<img src="figs/logo2.png" align="right" alt="" width="220" />
+
 #TODO EVERYTHING
 
 Cool thing, it is an [fpm](https://fpm.fortran-lang.org/index.html) project that already compiles with
