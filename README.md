@@ -262,7 +262,6 @@ flan                                   done.
 
 ```
 fpm run
-fpm run
  found blas package: openblas
 Project is up to date
  ---------------------------------------------------
