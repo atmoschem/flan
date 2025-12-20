@@ -2,10 +2,10 @@
 module linear_algebra
   use iso_fortran_env, only: wp => real64
  ! CORRECT: Only import 'inv'. 'norm2' is a built-in Fortran function.
-  use stdlib_linalg, only: inv
+  use stdlib_linalg, only: inv, diag
   implicit none
   private
-  public :: vec_norm, invert_matrix
+  public :: wp, vec_norm, invert_matrix, diag
 
 contains
 

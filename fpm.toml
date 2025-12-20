@@ -22,7 +22,12 @@ name = "hpc_package"
 source-dir = "app"
 main = "main.f90"
 
-[test]
+[[test]]
 name = "check"
 source-dir = "test"
 main = "check.f90"
+
+[[test]]
+name = "test_write"
+source-dir = "test"
+main = "test_write.f90"

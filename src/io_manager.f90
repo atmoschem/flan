@@ -9,7 +9,7 @@ module io_manager
   ! CORRECT: Make both subroutines public
   public :: write_1d_netcdf, write_2d_netcdf, write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, read_3d_netcdf
   public :: example_csv_reader
-  public :: logical_to_string
+  public :: logical_to_string, write_1d_text
 
 contains
 
@@ -74,7 +74,7 @@ contains
     status = nf90_def_dim(ncid, "dim2", dim2_size, dim2_id)
     call check(status)
 
-    status = nf90_def_var(ncid, varname, nf90_double, [dim2_id, dim1_id], var_id)
+    status = nf90_def_var(ncid, varname, nf90_double, [dim1_id, dim2_id], var_id)
     call check(status)
 
     status = nf90_enddef(ncid)
@@ -111,7 +111,7 @@ contains
     status = nf90_def_dim(ncid, "dim3", dim3_size, dim3_id)
     call check(status)
 
-    status = nf90_def_var(ncid, varname, nf90_double, [dim3_id, dim2_id, dim1_id], var_id)
+    status = nf90_def_var(ncid, varname, nf90_double, [dim1_id, dim2_id, dim3_id], var_id)
     call check(status)
 
     status = nf90_enddef(ncid)
@@ -343,5 +343,23 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
         s = "false"
       end if
     end function logical_to_string
+
+    subroutine write_1d_text(filename, data_matrix)
+      character(len=*), intent(in) :: filename
+      real(wp), intent(in) :: data_matrix(:)
+      integer :: unit_num, i, ios
+
+      open(newunit=unit_num, file=filename, status='replace', action='write', iostat=ios)
+      if (ios /= 0) then
+        print *, "Error opening file for writing: ", trim(filename)
+        return
+      end if
+
+      do i = 1, size(data_matrix)
+        write(unit_num, '(F15.5)') data_matrix(i)
+      end do
+
+      close(unit_num)
+    end subroutine write_1d_text
 
 end module io_manager
