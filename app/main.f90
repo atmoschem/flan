@@ -94,6 +94,8 @@ program main
                           receptor_hour, receptor_minute, receptor_second, &
                           receptor_path, receptor_gas, receptor_bg)       
 
+  print *, "Total receptors loaded: ", size(receptor_path)
+
 
   print *, "---------------------------------------------------"
   
@@ -106,7 +108,8 @@ program main
   ! emissions, it may be different
   call read_3d_netcdf(prior_path, prior_in, prior_name)
   
-  print *, "Prior shape: ", shape(prior_in)
+  print *, "Prior dimensions (lon, lat, time): ", shape(prior_in)
+  print *, "Prior range (min, max): ", minval(prior_in), maxval(prior_in)
   print *, "Prior sum: ", sum(prior_in)
 
   print *, "---------------------------------------------------"
@@ -125,26 +128,29 @@ program main
   allocate(h_mat(n_obs, n_grid))
   h_mat = 0.0_wp
 
-    do i = 1, size(receptor_path)
+     do i = 1, size(receptor_path)
 
-       print *, trim(receptor_path(i))
+        print *, "Processing footprint ", i, ": ", trim(receptor_path(i))
 
-       ! Footprints
-       call read_3d_netcdf(trim(receptor_path(i)), foot_in, foot_name)
-       call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
-       call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
+        ! Footprints
+        call read_3d_netcdf(trim(receptor_path(i)), foot_in, foot_name)
+        call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
+        call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
 
-       if (any(shape(foot_in) /= shape(prior_in))) then
-         print *, "ERROR: Dimension mismatch between Footprint and Prior!"
-         print *, "Foot: ", shape(foot_in)
-         print *, "Prior: ", shape(prior_in)
-         stop
-       end if
+        if (any(shape(foot_in) /= shape(prior_in))) then
+          print *, "ERROR: Dimension mismatch between Footprint and Prior!"
+          print *, "Foot: ", shape(foot_in)
+          print *, "Prior: ", shape(prior_in)
+          stop
+        end if
 
-      hsp(i) = sum(foot_in * prior_in)
-      h_mat(i, :) = reshape(sum(foot_in * prior_in, dim=3), [n_grid])
+       print *, "   Footprint ", i, " range (min, max): ", minval(foot_in), maxval(foot_in)
+       hsp(i) = sum(foot_in * prior_in)
+       h_mat(i, :) = reshape(sum(foot_in * prior_in, dim=3), [n_grid])
 
-    end do
+     end do
+
+   print *, "H matrix dimensions (n_obs, n_grid): ", shape(h_mat)
 
   ! 5 hsp
   print *, "---------------------------------------------------"
@@ -173,8 +179,8 @@ program main
   r_diag = obs_err_sd**2 + model_err_sd**2
   allocate(r_mat(size(hsp), size(hsp)))
   r_mat = diag(r_diag)
-  print *, "R diagonal (variance): ", r_diag(1)
-  print *, "R shape: ", shape(r_mat)
+  print *, "R matrix dimensions (n_obs, n_obs): ", shape(r_mat)
+  print *, "R diagonal (first 5 elements): ", r_diag(1:min(5, size(r_diag)))
 
   ! 5c Kalman Inversion
   print *, "---------------------------------------------------"
@@ -190,21 +196,26 @@ program main
   do i = 1, n_grid
     b_mat(i, i) = prior_err_sd**2
   end do
+  print *, "B matrix dimensions (n_grid, n_grid): ", shape(b_mat)
+  print *, "B diagonal (variance): ", b_mat(1,1)
   
   ! S = H B H' + R
   ! gain_k = B H' inv(S)
   allocate(s_mat(n_obs, n_obs))
   s_mat = matmul(h_mat, matmul(b_mat, transpose(h_mat))) + r_mat
+  print *, "S matrix dimensions (n_obs, n_obs): ", shape(s_mat)
   call invert_matrix(s_mat)
   
   allocate(gain_k(n_grid, n_obs))
   gain_k = matmul(b_mat, matmul(transpose(h_mat), s_mat))
+  print *, "Kalman Gain K dimensions (n_grid, n_obs): ", shape(gain_k)
   
   ! x_post = xa + K * (y - H*xa)
   ! Note: hsp calc above is essentially H*xa when xa=1
   allocate(x_post(n_grid))
   x_post = xa + matmul(gain_k, (receptor_gas - hsp))
   
+  print *, "Posterior state x_post size: ", size(x_post)
   print *, "Posterior scaling factors range: ", minval(x_post), " to ", maxval(x_post)
   print *, "Average scaling factor: ", sum(x_post) / n_grid
 
@@ -215,7 +226,8 @@ program main
   ! Reshape scaling factors to 2D
   allocate(sf_map(size(prior_in, 1), size(prior_in, 2)))
   sf_map = reshape(x_post, shape(sf_map))
-  
+
+  print *, "Reshaped scaling factors (sf_map) dimensions: ", shape(sf_map)
   print *, "Writing scaling factors to: " // trim(sf_filename)
   call write_2d_netcdf(sf_filename, sf_map, "scaling_factors")
   
@@ -227,6 +239,8 @@ program main
     post_flux(:, :, i) = prior_in(:, :, i) * sf_map
   end do
   
+  print *, "Posterior flux dimensions: ", shape(post_flux)
+  print *, "Average posterior flux: ", sum(post_flux) / size(post_flux)
   print *, "Writing posterior flux to: " // trim(post_flux_filename)
   call write_3d_netcdf(post_flux_filename, post_flux, prior_gas)
 
@@ -238,36 +252,6 @@ program main
     print *, a % isoformat()
   else
     print *, "Skipping Datetime Test."
-  end if
-
-! 7 netcdf
-  print *, "---------------------------------------------------"
-  if (run_netcdf_test) then
-    print '("--- NetCDF I/O Test ---")'
-    
-    ! Generate a sample matrix and invert it
-    matrix_out = reshape([ 2.0_wp, 1.0_wp, 1.0_wp, &
-                           4.0_wp, -6.0_wp, 0.0_wp, &
-                           -2.0_wp, 7.0_wp, 2.0_wp ], [3,3])
-    call invert_matrix(matrix_out)
-
-    ! --- NetCDF I/O ---
-    print '("Writing inverted matrix to file: ", A)', trim(netcdf_filename)
-    call write_2d_netcdf(netcdf_filename, matrix_out, "inverted_A")
-
-    ! Initialize input matrix to zeros
-    matrix_in = 0.0_wp
-    print '("Reading matrix from file...")'
-    call read_2d_netcdf(netcdf_filename, matrix_in, "inverted_A")
-
-    ! Verify the result
-    if (all(abs(matrix_out - matrix_in) < 1.0e-12_wp)) then
-      print '("SUCCESS: Data read back matches data written.")'
-    else
-      print '("FAILURE: Data mismatch.")'
-    end if
-  else
-    print *, "Skipping NetCDF I/O Test."
   end if
 
 end program main

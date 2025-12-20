@@ -4,8 +4,6 @@ My cool new project!
 
 <img src="figs/logo2.png" align="right" alt="" width="220" />
 
-#TODO EVERYTHING
-
 Cool thing, it is an [fpm](https://fpm.fortran-lang.org/index.html) project that already compiles with
 
 - LAPACK
@@ -264,18 +262,14 @@ flan                                   done.
 
 ```
 fpm run
+fpm run
  found blas package: openblas
 Project is up to date
  ---------------------------------------------------
  Reading configuration from 'namelists/config.nml'...
- receptor_config: receptors/receptor_1h.csv
- footprint_config: Footprint lat name: foot1lat
- footprint_config: Footprint lon name: foot1lon
- footprint_config: Footprint name: foot1
- prior_config: Prior NetCDF filename: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc
- prior_config: prior_name: co2_nmolm2s_denver_240
- prior_config: prior_gas: co2
- flan_config: add_bg: false
+ input_config: receptor: receptors/receptor_1h.csv
+ input_config: prior: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc
+ model_config: add_bg: false
  ---------------------------------------------------
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
@@ -291,19 +285,30 @@ Project is up to date
    Bg:   0.64000000000000001     
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
  First receptor time object: 2024-09-17T07:00:00.000
+ Total receptors loaded:            7
  ---------------------------------------------------
  Reading prior
- Prior shape:           25          20         240
+ Prior dimensions (lon, lat, time):           25          20         240
+ Prior range (min, max):    10.813813209533691        30470.574218750000     
  Prior sum:    152436660.70426941     
  ---------------------------------------------------
  Reading footprints
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.9128Nx105.1886Wx00002/hysplit2024x09x17x07x00x39.9128Nx105.1886Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7795Nx105.0052Wx00002/hysplit2024x09x17x07x00x39.7795Nx105.0052Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.8381Nx104.9498Wx00002/hysplit2024x09x17x07x00x39.8381Nx104.9498Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7322Nx105.0153Wx00002/hysplit2024x09x17x07x00x39.7322Nx105.0153Wx00002.nc
- /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
+ State vector size (N_grid):          500
+ Processing footprint            1 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
+    Footprint            1  range (min, max):    0.0000000000000000        6.5165825188159943E-002
+ Processing footprint            2 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
+    Footprint            2  range (min, max):    0.0000000000000000        0.0000000000000000     
+ Processing footprint            3 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.9128Nx105.1886Wx00002/hysplit2024x09x17x07x00x39.9128Nx105.1886Wx00002.nc
+    Footprint            3  range (min, max):    0.0000000000000000        4.0791746228933334E-002
+ Processing footprint            4 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7795Nx105.0052Wx00002/hysplit2024x09x17x07x00x39.7795Nx105.0052Wx00002.nc
+    Footprint            4  range (min, max):    0.0000000000000000        5.4270178079605103E-002
+ Processing footprint            5 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.8381Nx104.9498Wx00002/hysplit2024x09x17x07x00x39.8381Nx104.9498Wx00002.nc
+    Footprint            5  range (min, max):    0.0000000000000000        4.9182698130607605E-002
+ Processing footprint            6 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7322Nx105.0153Wx00002/hysplit2024x09x17x07x00x39.7322Nx105.0153Wx00002.nc
+    Footprint            6  range (min, max):    0.0000000000000000        4.7325719147920609E-002
+ Processing footprint            7 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
+    Footprint            7  range (min, max):    0.0000000000000000        0.0000000000000000     
+ H matrix dimensions (n_obs, n_grid):            7         500
  ---------------------------------------------------
  Enhancements co2 (ppb)
    1 :      3468.28477
@@ -315,15 +320,28 @@ Project is up to date
    7 :         0.00000
  ---------------------------------------------------
  Skipping background.
+ Writing hsp to: hsp/hsp_output.txt
+ ---------------------------------------------------
+ Creating R matrix (measurement and model error covariance)
+ R matrix dimensions (n_obs, n_obs):            7           7
+ R diagonal (first 5 elements):    2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000     
+ ---------------------------------------------------
+ Performing Kalman Inversion...
+ B matrix dimensions (n_grid, n_grid):          500         500
+ B diagonal (variance):   0.25000000000000000     
+ S matrix dimensions (n_obs, n_obs):            7           7
+ Kalman Gain K dimensions (n_grid, n_obs):          500           7
+ Posterior state x_post size:          500
+ Posterior scaling factors range:   -1.3543819814210214       to    1.0635400089597165     
+ Average scaling factor:   0.94587940100104351     
+ ---------------------------------------------------
+ Saving posterior outputs...
+ Reshaped scaling factors (sf_map) dimensions:           25          20
+ Writing scaling factors to: nc/scaling_factors.nc
+ Posterior flux dimensions:           25          20         240
+ Average posterior flux:    954.40075301462684     
+ Writing posterior flux to: nc/posterior_flux.nc
  ---------------------------------------------------
  ("--- Datetime Test ---")
- 2025-12-03T23:26:53.680
- ---------------------------------------------------
---- NetCDF I/O Test ---
-Writing inverted matrix to file: my_output_file.nc
-Reading matrix from file...
-SUCCESS: Data read back matches data written.
-```
+ 2025-12-20T01:00:52.803```
 
-## TODO
-ADd functions to read footprints, convolve and perform inversions

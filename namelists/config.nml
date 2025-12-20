@@ -25,5 +25,5 @@
 &test_config
    run_datetime_test = .true.
    run_netcdf_test   = .true.
-   netcdf_filename   = "my_output_file.nc"
+   netcdf_filename   = "nc/inverted_matrix.nc"
 /
