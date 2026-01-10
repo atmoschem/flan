@@ -5,7 +5,7 @@ program main
   use io_manager, only: write_1d_netcdf, write_2d_netcdf, &
   &write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, &
   &read_3d_netcdf, example_csv_reader, logical_to_string, write_1d_text
-  use datetime_module, only: datetime
+
   implicit none
 
   integer :: ios ! For I/O status
@@ -16,7 +16,7 @@ program main
   real(wp), dimension(:,:), allocatable :: h
 
 ! --- Namelist Variables (with defaults) ---
-  logical :: run_datetime_test = .true.
+
   logical :: run_netcdf_test   = .true.
   logical :: add_bg   = .true.
   character(len=256) :: netcdf_filename = "matrix_data.nc"
@@ -66,7 +66,7 @@ program main
                                         receptor_hour, receptor_minute, receptor_second
 
 
-  type(datetime) :: a
+
 
   ! --- NetCDF I/O Test Variables (MOVED HERE) ---
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
@@ -82,7 +82,7 @@ program main
   integer :: j_loop
   namelist /model_config/ add_bg, obs_err_sd, model_err_sd, prior_err_sd, &
        & spatial_correlation_len, temporal_correlation_len, time_resolution_hours
-  namelist /test_config/ run_datetime_test, run_netcdf_test, netcdf_filename
+  namelist /test_config/ run_netcdf_test, netcdf_filename
 
   print *, "---------------------------------------------------"
   print *, "Reading configuration from 'namelists/config.nml'..."
@@ -160,6 +160,7 @@ program main
   allocate(h_mat(n_obs, n_state))
   h_mat = 0.0_wp
 
+      print *, "--- Step 1: Processing Footprints (Constructing H) ---"
      do i = 1, size(receptor_path)
 
         print *, "Processing footprint ", i, ": ", trim(receptor_path(i))
@@ -235,7 +236,7 @@ program main
    print *, "H matrix dimensions (n_obs, n_grid): ", shape(h_mat)
 
   ! 5 hsp
-  print *, "---------------------------------------------------"
+  print *, "--- Step 2: Calculating Modeled Enhancements (HSP) ---"
   print *, "Enhancements " // trim(prior_gas) // " (ppb)"
   do i = 1, size(receptor_path)
     write(*, '(I4, A, F15.5)') i, " : ", hsp(i)
@@ -304,6 +305,7 @@ program main
   allocate(B_t(n_time_blocks, n_time_blocks))
   
   ! Build B_t
+  print *, "   > Building Temporal Covariance (B_t)..."
   do i = 1, n_time_blocks
      do j = 1, n_time_blocks
         ! distance in hours. Assuming indices are 3-hourly blocks?
@@ -325,6 +327,7 @@ program main
   nx = size(prior_in, 1)
   ny = size(prior_in, 2)
   
+  print *, "   > Building Spatial Covariance (B_s)..."
   do i = 1, n_grid
     iy1 = (i-1)/nx + 1
     ix1 = mod(i-1, nx) + 1
@@ -370,7 +373,8 @@ program main
   allocate(BHt(n_state, n_obs))
   BHt = 0.0_wp
   
-  print *, "Computing B * H^T using implicit Kronecker products..."
+  print *, "--- Step 3: Implicit Kronecker Multiplication (B * H^T) ---"
+  print *, "   > Avoiding full B matrix allocation..."
   allocate(V_in(n_grid, n_time_blocks))
   allocate(V_out(n_grid, n_time_blocks))
   
@@ -393,6 +397,7 @@ program main
   ! S = H * (B * H^T) + R
   ! S = H * BHt + R
   allocate(s_mat(n_obs, n_obs))
+  print *, "--- Step 4: Solving Inversion (S Matrix & Kalman Gain) ---"
   s_mat = matmul(h_mat, BHt) + r_mat
   print *, "S matrix dimensions (n_obs, n_obs): ", shape(s_mat)
   call invert_matrix(s_mat)
@@ -405,6 +410,7 @@ program main
   ! x_post = xa + K * (y - H*xa)
   ! Note: hsp calc above is essentially H*xa when xa=1
   allocate(x_post(n_state))
+  print *, "--- Step 5: Updating Posterior State ---"
   x_post = xa + matmul(gain_k, (receptor_gas - hsp))
   
   print *, "Posterior state x_post size: ", size(x_post)
@@ -437,6 +443,7 @@ program main
   n_time = size(prior_in, 3)
   allocate(post_flux(size(prior_in, 1), size(prior_in, 2), n_time))
   
+  print *, "--- Step 6: Calculating Posterior Fluxes ---"
   do i = 1, n_time
      ! Now we multiply Prior(x,y,t) by SF(x,y,t)
      post_flux(:, :, i) = prior_in(:, :, i) * sf_map_3d(:, :, i)
@@ -448,13 +455,6 @@ program main
   call write_3d_netcdf(post_flux_filename, post_flux, prior_gas)
 
 ! 6 date time
-  print *, "---------------------------------------------------"
-  if (run_datetime_test) then
-    print *, '("--- Datetime Test ---")'
-    a = a % now()
-    print *, a % isoformat()
-  else
-    print *, "Skipping Datetime Test."
-  end if
+
 
 end program main

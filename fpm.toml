@@ -1,17 +1,15 @@
 name = "flan"
-version = "0.3.0"
+version = "0.4.0"
 license = "license"
 author = "Sergio Ibarra-Espinosa"
 maintainer = "zergioibarra@gmail.com"
 copyright = "Copyright 2025, Sergio Ibarra-Espinosa"
 description = "A simple kalman filter."
 dependencies.openmp = "*"
-#dependencies.hdf5 = "*"
 dependencies.netcdf = "*"
 dependencies.blas = "*"
 dependencies.stdlib =  { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm"}
-dependencies.datetime = { git = "https://github.com/wavebitscientific/datetime-fortran" }
-dependencies.fpm = { git = "https://github.com/fortran-lang/fpm" }
+
 dependencies.csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 
 [library]

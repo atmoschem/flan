@@ -21,16 +21,12 @@ see [fpm.toml]()
 - netcdf
 - blas
 - stdlib =  https://github.com/fortran-lang/stdlib
-- datetime = https://github.com/wavebitscientific/datetime-fortran
-- fpm = https://github.com/fortran-lang/fpm
 - csv-fortran = https://github.com/jacobwilliams/csv-fortran.git
 
 fpm will find libraries in teh system such as openblas, netcdf, df5 and openmp.
 Also, it will download and compile 
 
 - stdlib
-- datetime to work with time 
-- fpm extra functions including strings
 - csv-fortran, to read csv files
 
 ## Installation
@@ -52,12 +48,20 @@ fpm build
 
 ```
 fpm build
+ found blas package: openblas
+stdlib_system_subprocess.c             done.
+stdlib_system.c                        done.
+stdlib_kinds.f90                       done.
+csv_kinds.f90                          done.
+fpm_os.c                               done.
+fpm_environment.c                      done.
 fpm_backend_console.f90                done.
 filesystem_utilities.c                 done.
 fpm_strings.f90                        done.
 iscygpty.c                             done.
 isatty.c                               done.
-csv_kinds.f90                          done.
+datetime_module.f90                    done.
+strptime.cpp                           done.
 constants.f90                          done.
 version.f90                            done.
 token.f90                              done.
@@ -68,8 +72,8 @@ shlex_module.f90                       done.
 stdlib_ascii.f90                       done.
 stdlib_linalg_constants.F90            done.
 stdlib_optval.f90                      done.
-error.f90                              done.
 csv_parameters.f90                     done.
+error.f90                              done.
 error.f90                              done.
 datetime.f90                           done.
 io.f90                                 done.
@@ -77,18 +81,18 @@ stdlib_error.f90                       done.
 stdlib_linalg_blas_aux.f90             done.
 stdlib_string_type.f90                 done.
 stdlib_blas_constants.f90              done.
+csv_utilities.f90                      done.
 fpm_environment.f90                    done.
 versioning.f90                         done.
-csv_utilities.f90                      done.
 utils.f90                              done.
 abc.f90                                done.
 f08estop.f90                           done.
 stdlib_strings.f90                     done.
 stdlib_blas.f90                        done.
 stdlib_io.f90                          done.
+csv_module.F90                         done.
 fpm_filesystem.F90                     done.
 fpm_release.F90                        done.
-csv_module.F90                         done.
 terminal.f90                           done.
 value.f90                              done.
 lexer.f90                              done.
@@ -261,7 +265,7 @@ flan                                   done.
 ## run
 
 ```
-fpm run
+ pm run
  found blas package: openblas
 Project is up to date
  ---------------------------------------------------
@@ -269,6 +273,9 @@ Project is up to date
  input_config: receptor: receptors/receptor_1h.csv
  input_config: prior: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc
  model_config: add_bg: false
+ model_config: spatial_corr:    50.000000000000000     
+ model_config: temp_corr:    12.000000000000000     
+ model_config: time_res_hours:            3
  ---------------------------------------------------
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
@@ -292,7 +299,12 @@ Project is up to date
  Prior sum:    152436660.70426941     
  ---------------------------------------------------
  Reading footprints
+ WARNING: State vector is massive (      120000 ).
+ B matrix will require approx    115.20000000000000       GB of RAM.
  State vector size (N_grid):          500
+ Time blocks:          240
+ Total State Vector Size:       120000
+ --- Step 1: Processing Footprints (Constructing H) ---
  Processing footprint            1 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc
     Footprint            1  range (min, max):    0.0000000000000000        6.5165825188159943E-002
  Processing footprint            2 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x37.3039Nx107.4842Wx00002/hysplit2024x09x17x07x00x37.3039Nx107.4842Wx00002.nc
@@ -307,8 +319,8 @@ Project is up to date
     Footprint            6  range (min, max):    0.0000000000000000        4.7325719147920609E-002
  Processing footprint            7 : /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc
     Footprint            7  range (min, max):    0.0000000000000000        0.0000000000000000     
- H matrix dimensions (n_obs, n_grid):            7         500
- ---------------------------------------------------
+ H matrix dimensions (n_obs, n_grid):            7      120000
+ --- Step 2: Calculating Modeled Enhancements (HSP) ---
  Enhancements co2 (ppb)
    1 :      3468.28477
    2 :         0.00000
@@ -326,21 +338,28 @@ Project is up to date
  R diagonal (first 5 elements):    2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000     
  ---------------------------------------------------
  Performing Kalman Inversion...
- B matrix dimensions (n_grid, n_grid):          500         500
- B diagonal (variance):   0.25000000000000000     
+ Constructing B matrix components (Implicit Kronecker)
+    > Building Temporal Covariance (B_t)...
+    > Building Spatial Covariance (B_s)...
+ --- Step 3: Implicit Kronecker Multiplication (B * H^T) ---
+    > Avoiding full B matrix allocation...
+ B * H^T computed.
+ --- Step 4: Solving Inversion (S Matrix & Kalman Gain) ---
  S matrix dimensions (n_obs, n_obs):            7           7
- Kalman Gain K dimensions (n_grid, n_obs):          500           7
- Posterior state x_post size:          500
- Posterior scaling factors range:   -1.3543819814210214       to    1.0635400089597165     
- Average scaling factor:   0.94587940100104351     
+ Kalman Gain K dimensions (n_grid, n_obs):       120000           7
+ --- Step 5: Updating Posterior State ---
+ Posterior state x_post size:       120000
+ Posterior scaling factors range:   -4.9127164135709611E-002  to    1.0000000000000000     
+ Average scaling factor:   0.97844169383261292     
  ---------------------------------------------------
  Saving posterior outputs...
+ Reshaped scaling factors (sf_map_3d) dimensions:           25          20         240
+ Writing 3D scaling factors to: scaling_factors_3d.nc
  Reshaped scaling factors (sf_map) dimensions:           25          20
  Writing scaling factors to: nc/scaling_factors.nc
+ --- Step 6: Calculating Posterior Fluxes ---
  Posterior flux dimensions:           25          20         240
- Average posterior flux:    954.40075301462684     
- Writing posterior flux to: nc/posterior_flux.nc
- ---------------------------------------------------
- ("--- Datetime Test ---")
- 2025-12-20T01:00:52.803```
+ Average posterior flux:    1240.0987327176965     
+ Writing posterior flux to: nc/posterior_flux.ncs
+ ```
 
