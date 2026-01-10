@@ -20,6 +20,9 @@
    obs_err_sd = 1.0
    model_err_sd = 1.0
    prior_err_sd = 0.5
+   spatial_correlation_len = 50.0  ! km
+   temporal_correlation_len = 12.0 ! hours
+   time_resolution_hours = 3
 /
 
 &test_config
