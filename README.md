@@ -265,14 +265,14 @@ flan                                   done.
 ## run
 
 ```
- pm run
+ fpm run
  found blas package: openblas
 Project is up to date
  ---------------------------------------------------
  Reading configuration from 'namelists/config.nml'...
  input_config: receptor: receptors/receptor_1h.csv
  input_config: prior: /media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc
- model_config: add_bg: false
+ model_config: add_bg: true 
  model_config: spatial_corr:    50.000000000000000     
  model_config: temp_corr:    12.000000000000000     
  model_config: time_res_hours:            3
@@ -282,21 +282,21 @@ Project is up to date
  Total records:            7
  First Record:
    Time:         2024           9          17           7           0           0
-   Gas:    10.100000000000000     
-   Bg:    2.0200000000000000     
+   Gas:    435100.00000000000     
+   Bg:    425000.00000000000     
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.7861Nx104.9886Wx00002/hysplit2024x09x17x07x00x39.7861Nx104.9886Wx00002.nc                                                                                                                                    
  Last Record:
    Time:         2024           9          17           7           0           0
-   Gas:    3.2000000000000002     
-   Bg:   0.64000000000000001     
+   Gas:    428200.00000000000     
+   Bg:    425000.00000000000     
    Path: /media/sergio/ext6/2024/09/tmp_2024x09x17x07x00x39.4381Nx108.0261Wx00002/hysplit2024x09x17x07x00x39.4381Nx108.0261Wx00002.nc                                                                                                                                    
  First receptor time object: 2024-09-17T07:00:00.000
  Total receptors loaded:            7
  ---------------------------------------------------
- Reading prior
- Prior dimensions (lon, lat, time):           25          20         240
- Prior range (min, max):    10.813813209533691        30470.574218750000     
- Prior sum:    152436660.70426941     
+ Reading prior components...
+ Anthro Prior dimensions (lon, lat, time):           25          20         240
+ Anthro Prior sum:    152436660.70426941     
+ Total Combined Prior sum:    152436660.70426941     
  ---------------------------------------------------
  Reading footprints
  WARNING: State vector is massive (      120000 ).
@@ -330,12 +330,12 @@ Project is up to date
    6 :      1386.99579
    7 :         0.00000
  ---------------------------------------------------
- Skipping background.
+ Adding background
  Writing hsp to: hsp/hsp_output.txt
  ---------------------------------------------------
  Creating R matrix (measurement and model error covariance)
  R matrix dimensions (n_obs, n_obs):            7           7
- R diagonal (first 5 elements):    2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000        2.0000000000000000     
+ R diagonal (first 5 elements):    20000000.000000000        20000000.000000000        20000000.000000000        20000000.000000000        20000000.000000000     
  ---------------------------------------------------
  Performing Kalman Inversion...
  Constructing B matrix components (Implicit Kronecker)
@@ -349,8 +349,8 @@ Project is up to date
  Kalman Gain K dimensions (n_grid, n_obs):       120000           7
  --- Step 5: Updating Posterior State ---
  Posterior state x_post size:       120000
- Posterior scaling factors range:   -4.9127164135709611E-002  to    1.0000000000000000     
- Average scaling factor:   0.97844169383261292     
+ Posterior scaling factors range:    1.0000000000000000       to    1.3917995672549905     
+ Average scaling factor:    1.0066829856101227     
  ---------------------------------------------------
  Saving posterior outputs...
  Reshaped scaling factors (sf_map_3d) dimensions:           25          20         240
@@ -359,7 +359,23 @@ Project is up to date
  Writing scaling factors to: nc/scaling_factors.nc
  --- Step 6: Calculating Posterior Fluxes ---
  Posterior flux dimensions:           25          20         240
- Average posterior flux:    1240.0987327176965     
- Writing posterior flux to: nc/posterior_flux.ncs
- ```
+ Average posterior flux:    1280.2053125883710     
+ Writing posterior flux to: nc/posterior_flux.nc
+ ---------------------------------------------------
+ Calculating Posterior Uncertainty...
+ Posterior SD range:   0.44514894956399992       0.50000000000000000     
+ Prior SD was:   0.50000000000000000     
+ Writing 3D posterior uncertainty to: posterior_uncertainty.nc
+ Writing 2D average posterior uncertainty to: nc/posterior_uncertainty_2d.nc
+ ---------------------------------------------------
+ Calculating Chi-Square Diagnostic...
+ Chi-Square Diagnostic Results:
+   Observations (n_obs):                  7
+   State Vector (n_state):            120000
+   Observation Cost (J_obs):      5.5228568814539774     
+   Prior Cost (J_prior):         0.69398401460577408     
+   Total Cost (J_total):          6.2168408960597512     
+   Reduced Chi-Square (avg):     0.88812012800853590     
+     (Ideally close to 1.0)
+```
 
