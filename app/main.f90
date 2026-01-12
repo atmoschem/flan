@@ -35,6 +35,7 @@ program main
   character(len=256) :: prior_natural_path = "prior_natural.nc"
   character(len=256) :: prior_natural_name = "natural"
   character(len=256) :: prior_gas = "gas"
+  character(len=32)  :: distance_metric = "euclidean"
 
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
@@ -83,7 +84,8 @@ program main
   real(wp) :: d_km, dy, dx, j_dummy
   integer :: j_loop
   namelist /model_config/ add_bg, obs_err_sd, model_err_sd, prior_err_sd, &
-       & spatial_correlation_len, temporal_correlation_len, time_resolution_hours
+       & spatial_correlation_len, temporal_correlation_len, time_resolution_hours, &
+     & distance_metric
   namelist /test_config/ run_netcdf_test, netcdf_filename
 
   print *, "---------------------------------------------------"
@@ -106,6 +108,7 @@ program main
   print *, "model_config: spatial_corr: ", spatial_correlation_len
   print *, "model_config: temp_corr: ", temporal_correlation_len
   print *, "model_config: time_res_hours: ", time_resolution_hours 
+  print *, "model_config: distance_metric: ", trim(distance_metric)
 
   close(10)
   print *, "---------------------------------------------------"
@@ -307,9 +310,28 @@ program main
        ! Let's use simple Euclidean for now or simple scaling.
        ! d = sqrt( (dlat*111)**2 + (dlon*111*cos(lat))**2 )
        
-       dy = (lats(iy1) - lats(iy2)) * 111.0_wp
-       dx = (lons(ix1) - lons(ix2)) * 111.0_wp * cos(lats(iy1)*3.14159/180.0_wp)
-       d_km = sqrt(dx**2 + dy**2)
+       if (trim(distance_metric) == 'haversine') then
+          ! Haversine Distance (Proper geodetic distance)
+          block
+             real(wp) :: lat1, lat2, dlat, dlon, a, c
+             real(wp), parameter :: PI = 3.141592653589793_wp
+             real(wp), parameter :: R_EARTH = 6371.0_wp
+             
+             lat1 = lats(iy1) * PI / 180.0_wp
+             lat2 = lats(iy2) * PI / 180.0_wp
+             dlat = (lats(iy2) - lats(iy1)) * PI / 180.0_wp
+             dlon = (lons(ix2) - lons(ix1)) * PI / 180.0_wp
+             
+             a = sin(dlat/2.0_wp)**2 + cos(lat1) * cos(lat2) * sin(dlon/2.0_wp)**2
+             c = 2.0_wp * atan2(sqrt(a), sqrt(1.0_wp-a))
+             d_km = R_EARTH * c
+          end block
+       else
+          ! Euclidean Distance (with simple lat correction for small domains)
+          dy = (lats(iy1) - lats(iy2)) * 111.0_wp
+          dx = (lons(ix1) - lons(ix2)) * 111.0_wp * cos(lats(iy1)*3.14159/180.0_wp)
+          d_km = sqrt(dx**2 + dy**2)
+       end if
        
        B_s(i,j) = (prior_err_sd**2) * exp( -1.0_wp * d_km / spatial_correlation_len )
     end do
