@@ -265,7 +265,7 @@ flan                                   done.
 ## run
 
 ```
- fpm run
+fpm run
  found blas package: openblas
 Project is up to date
  ---------------------------------------------------
@@ -276,6 +276,8 @@ Project is up to date
  model_config: spatial_corr:    50.000000000000000     
  model_config: temp_corr:    12.000000000000000     
  model_config: time_res_hours:            3
+  model_config: coord_units: degrees
+  >>> 'degrees' selected. Haversine distance will be used. <<<
  ---------------------------------------------------
  Reading CSV file: receptors/receptor_1h.csv
  --- CSV Summary ---
@@ -349,8 +351,8 @@ Project is up to date
  Kalman Gain K dimensions (n_grid, n_obs):       120000           7
  --- Step 5: Updating Posterior State ---
  Posterior state x_post size:       120000
- Posterior scaling factors range:    1.0000000000000000       to    1.3917995672549905     
- Average scaling factor:    1.0066829856101227     
+ Posterior scaling factors range:    1.0000000000000000       to    1.3917493301699611     
+ Average scaling factor:    1.0066774491326598     
  ---------------------------------------------------
  Saving posterior outputs...
  Reshaped scaling factors (sf_map_3d) dimensions:           25          20         240
@@ -359,11 +361,11 @@ Project is up to date
  Writing scaling factors to: nc/scaling_factors.nc
  --- Step 6: Calculating Posterior Fluxes ---
  Posterior flux dimensions:           25          20         240
- Average posterior flux:    1280.2053125883710     
+ Average posterior flux:    1280.1999511191359     
  Writing posterior flux to: nc/posterior_flux.nc
  ---------------------------------------------------
  Calculating Posterior Uncertainty...
- Posterior SD range:   0.44514894956399992       0.50000000000000000     
+ Posterior SD range:   0.44516751777394714       0.50000000000000000     
  Prior SD was:   0.50000000000000000     
  Writing 3D posterior uncertainty to: posterior_uncertainty.nc
  Writing 2D average posterior uncertainty to: nc/posterior_uncertainty_2d.nc
@@ -372,10 +374,10 @@ Project is up to date
  Chi-Square Diagnostic Results:
    Observations (n_obs):                  7
    State Vector (n_state):            120000
-   Observation Cost (J_obs):      5.5228568814539774     
-   Prior Cost (J_prior):         0.69398401460577408     
-   Total Cost (J_total):          6.2168408960597512     
-   Reduced Chi-Square (avg):     0.88812012800853590     
+   Observation Cost (J_obs):      5.5231492369936479     
+   Prior Cost (J_prior):         0.69388329338569255     
+   Total Cost (J_total):          6.2170325303793401     
+   Reduced Chi-Square (avg):     0.88814750433990575     
      (Ideally close to 1.0)
 ```
 
