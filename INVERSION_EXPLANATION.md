@@ -11,23 +11,24 @@ This document details the **4D Analytical Inversion** system implemented in FLAN
 The model solves for the "true" state of emissions by optimizing the match between observed atmospheric concentrations and modeled transport, subject to prior constraints.
 
 ### The Cost Function
-We minimize the Bayesian cost function $J(x)$:
+We minimize the Bayesian cost function $J(x)$, which represents the trade-off between sticking to our initial guess and fitting the new measurements:
 
-$$J(x) = (x - x_a)^T B^{-1} (x - x_a) + (y - Hx)^T R^{-1} (y - Hx)$$
+$$J(x) = (x - x_a)^T B^{-1} (x - x_a) + (y - [Hx + y_{bg}])^T R^{-1} (y - [Hx + y_{bg}])$$
 
 Where:
-*   $x$: State vector (Scaling Factors for emissions).
-*   $x_a$: **Prior** state vector (Initial guess, typically 1.0).
-*   $B$: **Prior Covariance** matrix (Uncertainty in $x_a$).
-*   $y$: **Observations** vector (Mixing ratios in ppm/ppb).
-*   $H$: **Sensitivity Matrix** (Jacobian/Footprints).
-*   $R$: **Observation Covariance** matrix (Measurement + Model error).
+*   $x$: State vector (**Scaling Factors** for emissions).
+*   $x_a$: **Prior** state vector (typically 1.0).
+*   $B$: **Prior Covariance** (Errors in emission maps, handles spatial/temporal smoothing).
+*   $y$: **Observations** (Mixing ratios, usually in ppb).
+*   $y_{bg}$: **Background** CO2 (The air concentration before it entered our study domain).
+*   $H$: **Sensitivity Matrix** (Jacobian/Footprints conjoined with the Prior Flux).
+*   $R$: **Observation Covariance** (Measurement Noise + Model/Transport Error).
 
 ### The Analytical Solution
-Since the transport is linear, we solve for the posterior state $x_{post}$ directly using the **Kalman Gain ($K$)**:
+Since transport is linear, we solve for the posterior state $x_{post}$ exactly using the **Kalman Gain ($K$)**:
 
 $$ K = B H^T (H B H^T + R)^{-1} $$
-$$ x_{post} = x_a + K (y - H x_a) $$
+$$ x_{post} = x_a + K (y - [H x_a + y_{bg}]) $$
 
 ---
 
@@ -47,17 +48,23 @@ In the code (`main.f90`), this is implemented by element-wise multiplication of 
 
 ---
 
-## 3. Efficient Covariance (Implicit Kronecker)
-
-A major challenge in 4D inversion is the size of the $B$ matrix. For a state vector of size 120,000, $B$ requires ~115 GB of RAM.
-
-**Solution**: We define $B$ as the **Kronecker Product** of temporal and spatial correlations:
-$$ B = B_{temporal} \otimes B_{spatial} $$
-
-We avoid constructing $B$ explicitly. Instead, we compute the term $Z = B H^T$ used in the Kalman Gain by exploiting the property:
-$$ (B_t \otimes B_s) \cdot \text{vec}(V) = \text{vec}(B_s \cdot V \cdot B_t^T) $$
-
 This reduces memory usage from **100+ GB** to **~50 MB**, allowing high-resolution 4D inversions on standard hardware.
+
+---
+
+## 4. Error Covariance Treatment (R & B)
+
+### Prior Support ($B$ Matrix)
+FLAN supports **Multi-Component Priors**. You can provide separate files for Anthropogenic and Natural (Biogenic) emissions. 
+*   **Summation**: The code sums them ($Prior_{tot} = Prior_{anth} + Prior_{nat}$) before building $H$.
+*   **Correlation**: The Kronecker smoothing ($B_t \otimes B_s$) ensures that information from an observation at one tower is spread to neighboring pixels and time-steps in a physically consistent way.
+
+### Observation Error ($R$ Matrix)
+To handle **Model-Data Mismatch (MDM)**, $R$ is treated as a diagonal matrix where each entry $R_{ii}$ accounts for:
+1.  **Measurement Error**: Instrument precision (read from the 9th column of the CSV).
+2.  **Model/Transport Error**: Uncertainty in wind fields and representation error (set in `config.nml`).
+
+$$R_{ii} = \sigma_{meas}^2 + \sigma_{transport}^2$$
 
 ---
 
@@ -96,11 +103,26 @@ This effectively propagates information forward, ensuring that today's prelimina
 
 ### Expected Dimensions
 *   **Input Prior**: `[Lon, Lat, N_time]` (e.g., 240 distinct 3-hour blocks).
-*   **Output Posterior**: `[Lon, Lat, N_time]`.
-    *   `scaling_factors_3d.nc`: The optimized scaling factors.
-    *   `posterior_flux.nc`: The final flux values.
+*   **Output Posterior**:
+    *   `nc/scaling_factors.nc`: Time-averaged optimized multipliers.
+    *   `nc/posterior_flux.nc`: The final physical flux values ($x_{post} \times Prior_{tot}$).
+    *   `nc/posterior_uncertainty.nc`: The analytical standard deviation for every pixel and time step.
 
 ### Applicability
 While designed for resolving the **Diurnal Cycle of Biogenic CO2** (Photosynthesis vs. Respiration), this 3-hourly 4D framework is valid for:
 *   **Methane (CH4)**: Resolving intermittent leaks or wetland variability.
 *   **Air Quality (NOx/CO)**: Tracking sub-daily urban pollution plumes.
+---
+
+## 6. Statistical Validation: The Chi-Square Diagnostic
+
+To ensure the inversion is reliable, FLAN calculates the **Reduced Chi-Square ($\chi_r^2$)**:
+
+$$\chi_r^2 = \frac{J(x_{post})}{N_{obs}}$$
+
+*   **$\chi_r^2 \approx 1.0$**: The "Gold Standard." Your error assumptions ($R$ and $B$) are perfectly balanced with your model residuals.
+*   **$\chi_r^2 \gg 1.0$**: Underestimated errors. The model is struggling to fit the data. You may be missing sources (e.g., Natural emissions) or your transport error is too small.
+*   **$\chi_r^2 \ll 1.0$**: Overestimated errors. The model is "over-fitting" the noise. Your error bars are too large.
+
+### Unit Consistency
+The model expects all concentration units to be in **ppb** (parts per billion). If your CSV is in **ppm**, you must multiply by 1000 before inputting, otherwise the Chi-Square will explode due to the 1000x scale mismatch.
