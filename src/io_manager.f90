@@ -260,13 +260,13 @@ contains
 
 
 ! --- Example CSV Reader using csv-fortran ---
-subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, path, gas, bg)
+subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, path, gas, bg, err)
     character(len=*), intent(in) :: csvname
 
 ! These are now output arguments
     integer, dimension(:), allocatable, intent(out) :: year, month, day, hour, minute, second
     character(len=256), dimension(:), allocatable, intent(out) :: path
-    real(wp), dimension(:), allocatable, intent(out) :: gas, bg
+    real(wp), dimension(:), allocatable, intent(out) :: gas, bg, err
 
     type(csv_file) :: csv
     character(len=30),dimension(:),allocatable :: header
@@ -296,6 +296,7 @@ subroutine example_csv_reader(csvname, year, month, day, hour, minute, second, p
     call csv%get(6,path,at_end)
     call csv%get(7,gas,at_end)
     call csv%get(8,bg,at_end)
+    call csv%get(9,err,at_end) 
 
     ! Get the number of records read
     num_records = size(year)

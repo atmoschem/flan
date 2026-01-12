@@ -33,8 +33,10 @@ program main
   character(len=256) :: foot_lat = "foot1lat"
   character(len=256) :: foot_lon = "foot1lon"
   character(len=256) :: foot_name = "foot1"
-  character(len=256) :: prior_path = "prior.nc"
-  character(len=256) :: prior_name = "prior"
+  character(len=256) :: prior_path = "prior_anthro.nc"
+  character(len=256) :: prior_name = "anthro"
+  character(len=256) :: prior_natural_path = "prior_natural.nc"
+  character(len=256) :: prior_natural_name = "natural"
   character(len=256) :: prior_gas = "gas"
 
 
@@ -59,9 +61,11 @@ program main
   real(wp), dimension(:), allocatable :: time_blocks_start ! Start hour of each block relative to simulation start
   real(wp), dimension(:,:), allocatable :: dist_mat ! Spatial distance matrix
   real(wp), dimension(:,:), allocatable :: time_dist_mat ! Temporal distance matrix
+  real(wp), dimension(:), allocatable :: post_var, post_sd
+  real(wp), dimension(:,:,:), allocatable :: post_sd_3d
 
   character(len=256), dimension(:), allocatable :: receptor_path
-  real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg
+  real(wp), dimension(:), allocatable :: receptor_gas, receptor_bg, receptor_err
   integer, dimension(:), allocatable :: receptor_year, receptor_month, receptor_day, &
                                         receptor_hour, receptor_minute, receptor_second
 
@@ -72,6 +76,7 @@ program main
   real(wp) :: matrix_out(3,3), matrix_in(3,3)
 
   namelist /input_config/ receptor_filename, prior_path, prior_name, prior_gas, &
+  & prior_natural_path, prior_natural_name, &
   & foot_lat, foot_lon, foot_name
   namelist /output_config/ hsp_output_file, sf_filename, post_flux_filename
 
@@ -112,7 +117,7 @@ program main
   call example_csv_reader(receptor_filename, &
                           receptor_year, receptor_month, receptor_day, &
                           receptor_hour, receptor_minute, receptor_second, &
-                          receptor_path, receptor_gas, receptor_bg)       
+                          receptor_path, receptor_gas, receptor_bg, receptor_err)       
 
   print *, "Total receptors loaded: ", size(receptor_path)
 
@@ -120,17 +125,27 @@ program main
   print *, "---------------------------------------------------"
   
   ! 3 --- Footprints ---
-  print *, "Reading prior"
-  ! TODO: Make a function to read the prior
-  ! based on the time in the footprint.
-  ! In this case, I'm using annual emissions
-  ! But in case of monthly, daily or hourly
-  ! emissions, it may be different
+  print *, "Reading prior components..."
   call read_3d_netcdf(prior_path, prior_in, prior_name)
   
-  print *, "Prior dimensions (lon, lat, time): ", shape(prior_in)
-  print *, "Prior range (min, max): ", minval(prior_in), maxval(prior_in)
-  print *, "Prior sum: ", sum(prior_in)
+  print *, "Anthro Prior dimensions (lon, lat, time): ", shape(prior_in)
+  print *, "Anthro Prior sum: ", sum(prior_in)
+
+  if (trim(prior_natural_path) /= "" .and. trim(prior_natural_path) /= "none") then
+    print *, "Reading natural prior component: ", trim(prior_natural_path)
+    block
+      real(wp), dimension(:,:,:), allocatable :: prior_natural
+      call read_3d_netcdf(prior_natural_path, prior_natural, prior_natural_name)
+      if (any(shape(prior_natural) /= shape(prior_in))) then
+        print *, "ERROR: Natural prior dimensions mismatch!"
+        stop
+      end if
+      prior_in = prior_in + prior_natural
+      print *, "Natural Prior sum: ", sum(prior_natural)
+    end block
+  end if
+
+  print *, "Total Combined Prior sum: ", sum(prior_in)
 
   print *, "---------------------------------------------------"
 
@@ -259,7 +274,8 @@ program main
   print *, "---------------------------------------------------"
   print *, "Creating R matrix (measurement and model error covariance)"
   allocate(r_diag(size(hsp)))
-  r_diag = obs_err_sd**2 + model_err_sd**2
+  ! Use measurement-specific error from CSV if available, else fallback to obs_err_sd
+  r_diag = receptor_err**2 + model_err_sd**2
   allocate(r_mat(size(hsp), size(hsp)))
   r_mat = diag(r_diag)
   print *, "R matrix dimensions (n_obs, n_obs): ", shape(r_mat)
@@ -453,6 +469,115 @@ program main
   print *, "Average posterior flux: ", sum(post_flux) / size(post_flux)
   print *, "Writing posterior flux to: " // trim(post_flux_filename)
   call write_3d_netcdf(post_flux_filename, post_flux, prior_gas)
+
+  ! 5e Posterior Uncertainty (Variance/SD)
+  print *, "---------------------------------------------------"
+  print *, "Calculating Posterior Uncertainty..."
+
+  ! Calculate analytical posterior variance:
+  ! P = B - K*H*B
+  ! We only want diag(P).
+  ! diag(P)_i = B_ii - sum_j ( K_ij * (HB)_ji )
+  ! HB is (m x n), (HB)^T is (n x m).
+  ! We have BHt = (HB)^T = B * H^T. Dimensions (n_state, n_obs).
+  ! So term is K * BHt^T.
+  ! Diagonal elem i: sum_j ( K(i,j) * BHt^T(j,i) ) = sum_j ( K(i,j) * BHt(i,j) )
+
+  allocate(post_var(n_state))
+  ! Initial variance is B_ii.
+  ! B_ii is constant (prior_err_sd^2) because diagonals of spatial correlation (1.0) and temporal correlation (1.0) are 1.
+  post_var = prior_err_sd**2
+
+  do i = 1, n_state
+     ! Subtract reduction in variance
+     post_var(i) = post_var(i) - dot_product(gain_k(i,:), BHt(i,:))
+  end do
+  
+  ! Convert to Standard Deviation
+  allocate(post_sd(n_state))
+  ! Ensure non-negative (numerical errors could cause slightly negative numbers near 0)
+  where (post_var < 0.0_wp) post_var = 0.0_wp
+  post_sd = sqrt(post_var)
+
+  print *, "Posterior SD range: ", minval(post_sd), maxval(post_sd)
+  print *, "Prior SD was: ", prior_err_sd
+
+  ! Save 3D Uncertainty
+  allocate(post_sd_3d(size(prior_in, 1), size(prior_in, 2), n_time_blocks))
+  post_sd_3d = reshape(post_sd, shape(post_sd_3d))
+  
+  print *, "Writing 3D posterior uncertainty to: posterior_uncertainty.nc"
+  call write_3d_netcdf("posterior_uncertainty.nc", post_sd_3d, "posterior_uncertainty")
+
+  ! Save 2D Average Uncertainty
+  ! Note: Average variance is not variance of average.
+  ! Standard deviation of the mean field? Or mean of standard deviation field?
+  ! Usually people want to know "how uncertain is the value at this grid cell on average".
+  ! Let's output average SD for visualization.
+  if (allocated(sf_map)) deallocate(sf_map)
+  allocate(sf_map(size(prior_in, 1), size(prior_in, 2)))
+  sf_map = sum(post_sd_3d, dim=3) / real(n_time_blocks, wp)
+  
+  print *, "Writing 2D average posterior uncertainty to: nc/posterior_uncertainty_2d.nc"
+  call write_2d_netcdf("nc/posterior_uncertainty_2d.nc", sf_map, "posterior_uncertainty")
+
+  ! --- Step 7: Chi-Square Diagnostic ---
+  print *, "---------------------------------------------------"
+  print *, "Calculating Chi-Square Diagnostic..."
+  
+  block
+    real(wp) :: cost_obs, cost_prior, chi2_total
+    real(wp), dimension(n_obs) :: residual_y
+    real(wp), dimension(n_state) :: residual_x
+    real(wp), dimension(n_grid, n_time_blocks) :: X_mat, tmp_mat
+    real(wp), dimension(n_grid, n_grid) :: B_s_inv
+    real(wp), dimension(n_time_blocks, n_time_blocks) :: B_t_inv
+    
+    ! 1. Obs Term: (y - [Hx + bg])^T R^-1 (y - [Hx + bg])
+    ! Actually, y - Hx_post if add_bg is false, or y - (Hx_post + bg) if true.
+    if (add_bg) then
+       residual_y = receptor_gas - (matmul(h_mat, x_post) + receptor_bg)
+    else
+       residual_y = receptor_gas - matmul(h_mat, x_post)
+    end if
+    
+    cost_obs = 0.0_wp
+    do i = 1, n_obs
+       cost_obs = cost_obs + (residual_y(i)**2) / r_diag(i)
+    end do
+    
+    ! 2. Prior Term: (x - xa)^T B^-1 (x - xa)
+    ! Since B is Kronecker, B^-1 = B_t^-1 (x) B_s^-1
+    ! Let delta_x = x_post - xa
+    residual_x = x_post - xa
+    X_mat = reshape(residual_x, [n_grid, n_time_blocks])
+    
+    B_s_inv = B_s
+    call invert_matrix(B_s_inv)
+    B_t_inv = B_t
+    call invert_matrix(B_t_inv)
+    
+    ! Prior Cost = trace( X^T * B_s_inv * X * B_t_inv )
+    tmp_mat = matmul(B_s_inv, X_mat)
+    cost_prior = sum(tmp_mat * matmul(X_mat, B_t_inv))
+    
+    chi2_total = cost_obs + cost_prior
+    
+    print *, "Chi-Square Diagnostic Results:"
+    print *, "  Observations (n_obs):       ", n_obs
+    print *, "  State Vector (n_state):      ", n_state
+    print *, "  Observation Cost (J_obs):   ", cost_obs
+    print *, "  Prior Cost (J_prior):       ", cost_prior
+    print *, "  Total Cost (J_total):       ", chi2_total
+    print *, "  Reduced Chi-Square (avg):   ", chi2_total / real(n_obs, wp)
+    print *, "    (Ideally close to 1.0)"
+    
+    if (chi2_total / real(n_obs, wp) > 2.0) then
+       print *, "  WARNING: Chi-Square high. Your errors (R or B) may be underestimated."
+    else if (chi2_total / real(n_obs, wp) < 0.5) then
+       print *, "  WARNING: Chi-Square low. Your errors (R or B) may be overestimated."
+    end if
+  end block
 
 ! 6 date time
 

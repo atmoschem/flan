@@ -3,6 +3,8 @@
    receptor_filename   = 'receptors/receptor_1h.csv'
    prior_path   = '/media/sergio/ext6/noaa/co2_nmolm2s_denver_240.nc'
    prior_name = 'co2_nmolm2s_denver_240'
+   prior_natural_path = ''
+   prior_natural_name = ''
    prior_gas   = 'co2'
    foot_lat   = 'foot1lat'
    foot_lon   = 'foot1lon'
@@ -16,9 +18,9 @@
 /
 
 &model_config
-   add_bg = .false.
-   obs_err_sd = 1.0
-   model_err_sd = 1.0
+   add_bg = .true.
+   obs_err_sd = 2000.0
+   model_err_sd = 4000.0
    prior_err_sd = 0.5
    spatial_correlation_len = 50.0  ! km
    temporal_correlation_len = 12.0 ! hours
