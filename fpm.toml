@@ -1,6 +1,6 @@
 name = "flan"
-version = "0.4.0"
-license = "license"
+version = "0.5.0"
+license = "MIT"
 author = "Sergio Ibarra-Espinosa"
 maintainer = "zergioibarra@gmail.com"
 copyright = "Copyright 2025, Sergio Ibarra-Espinosa"
