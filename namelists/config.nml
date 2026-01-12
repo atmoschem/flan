@@ -25,7 +25,9 @@
    spatial_correlation_len = 50.0  ! km
    temporal_correlation_len = 12.0 ! hours
    time_resolution_hours = 3
-   distance_metric = 'haversine'
+   coord_units = 'degrees'  ! 'degrees' (uses Haversine) or 'meters' (uses Euclidean)
+   use_prior_sf = .false.
+   prior_sf_path = 'nc/scaling_factors_3d.nc'
 /
 
 &test_config

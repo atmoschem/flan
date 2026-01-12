@@ -93,6 +93,12 @@ We define a look-back window (e.g., 10 days) matching the footprint length.
 
 This effectively propagates information forward, ensuring that today's preliminary estimate becomes tomorrow's refined estimate.
 
+### Implementation in FLAN
+You can trigger this behavior using the `use_prior_sf` toggle in `config.nml`. 
+- When enabled, the model reads a 3D scaling factor file from a previous run.
+- It performs a **1-step time shift**: the information at Time Index $k$ in Run A becomes the Prior at Time Index $k-1$ in Run B. 
+- The very last time step in the new window (the new data) is initialized with the standard prior of **1.0**.
+
 ---
 
 ## 5. Operational Inputs & Outputs

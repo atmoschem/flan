@@ -35,7 +35,9 @@ program main
   character(len=256) :: prior_natural_path = "prior_natural.nc"
   character(len=256) :: prior_natural_name = "natural"
   character(len=256) :: prior_gas = "gas"
-  character(len=32)  :: distance_metric = "euclidean"
+  character(len=32)  :: coord_units = "degrees"
+  logical            :: use_prior_sf = .false.
+  character(len=256) :: prior_sf_path = "nc/scaling_factors_3d.nc"
 
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
@@ -85,7 +87,7 @@ program main
   integer :: j_loop
   namelist /model_config/ add_bg, obs_err_sd, model_err_sd, prior_err_sd, &
        & spatial_correlation_len, temporal_correlation_len, time_resolution_hours, &
-     & distance_metric
+     & coord_units, use_prior_sf, prior_sf_path
   namelist /test_config/ run_netcdf_test, netcdf_filename
 
   print *, "---------------------------------------------------"
@@ -108,7 +110,18 @@ program main
   print *, "model_config: spatial_corr: ", spatial_correlation_len
   print *, "model_config: temp_corr: ", temporal_correlation_len
   print *, "model_config: time_res_hours: ", time_resolution_hours 
-  print *, "model_config: distance_metric: ", trim(distance_metric)
+  print *, " model_config: coord_units: ", trim(coord_units)
+  print *, " model_config: use_prior_sf: ", use_prior_sf
+  if (use_prior_sf) print *, " model_config: prior_sf_path: ", trim(prior_sf_path)
+  
+  if (trim(coord_units) == 'meters') then
+     print *, " !!! WARNING: 'meters' selected. Coords in NetCDF MUST be in METERS. Euclidean distance will be used. !!!"
+  else if (trim(coord_units) == 'degrees') then
+     print *, " >>> 'degrees' selected. Haversine distance will be used. <<<"
+  else
+     print *, " ERROR: Invalid coord_units. Use 'degrees' or 'meters'."
+     stop
+  end if
 
   close(10)
   print *, "---------------------------------------------------"
@@ -171,6 +184,30 @@ program main
   print *, "State vector size (N_grid): ", n_grid
   print *, "Time blocks: ", n_time_blocks
   print *, "Total State Vector Size: ", n_state
+  
+  ! Initialize Prior Scaling Factors (xa)
+  allocate(xa(n_state))
+  if (use_prior_sf .and. prior_sf_path /= "") then
+     print *, "   > Loading prior scaling factors (Restart Mode) from: ", trim(prior_sf_path)
+     block
+        real(wp), allocatable :: sf_old(:,:,:)
+        integer :: t
+        allocate(sf_old(size(prior_in, 1), size(prior_in, 2), n_time_blocks))
+        call read_3d_netcdf(prior_sf_path, sf_old, "scaling_factors")
+        
+        ! Apply 1-step time shift for Fixed-Lag Kalman Smoother
+        ! This assumes current window is shifted by exactly 1 time block (e.g. 3h)
+        do t = 1, n_time_blocks - 1
+           sf_old(:,:,t) = sf_old(:,:,t+1)
+        end do
+        sf_old(:,:,n_time_blocks) = 1.0_wp ! New time block starts with prior 1.0
+        
+        xa = reshape(sf_old, [n_state])
+        deallocate(sf_old)
+     end block
+  else
+     xa = 1.0_wp
+  end if
 
   allocate(h_mat(n_obs, n_state))
   h_mat = 0.0_wp
@@ -198,7 +235,8 @@ program main
        ! We flatten the 3D fields into the state-vector row.
        h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
 
-       hsp(i) = sum(foot_in * prior_in)
+       ! Calculate modeled enhancement: y_prior = H * xa
+       hsp(i) = dot_product(h_mat(i, :), xa)
      end do
 
    print *, "H matrix dimensions (n_obs, n_grid): ", shape(h_mat)
@@ -238,11 +276,7 @@ program main
   print *, "---------------------------------------------------"
   print *, "Performing Kalman Inversion..."
   
-  ! allocate(xa(n_grid)) ! Removed, done above
-  ! xa = 1.0_wp          ! Removed, done above
-  
-  allocate(xa(n_state))
-  xa = 1.0_wp
+  ! xa is initialized above for HSP calculation
   
   ! Prior covariance matrix B
   ! Implement Spatial and Temporal Correlations
@@ -310,8 +344,8 @@ program main
        ! Let's use simple Euclidean for now or simple scaling.
        ! d = sqrt( (dlat*111)**2 + (dlon*111*cos(lat))**2 )
        
-       if (trim(distance_metric) == 'haversine') then
-          ! Haversine Distance (Proper geodetic distance)
+       if (trim(coord_units) == 'degrees') then
+          ! Haversine Distance (Proper geodetic distance for lat/lon)
           block
              real(wp) :: lat1, lat2, dlat, dlon, a, c
              real(wp), parameter :: PI = 3.141592653589793_wp
@@ -327,10 +361,11 @@ program main
              d_km = R_EARTH * c
           end block
        else
-          ! Euclidean Distance (with simple lat correction for small domains)
-          dy = (lats(iy1) - lats(iy2)) * 111.0_wp
-          dx = (lons(ix1) - lons(ix2)) * 111.0_wp * cos(lats(iy1)*3.14159/180.0_wp)
-          d_km = sqrt(dx**2 + dy**2)
+          ! Raw Euclidean Distance (For UTM/Projected Meters)
+          dy = (lats(iy1) - lats(iy2))
+          dx = (lons(ix1) - lons(ix2))
+          ! Result is in meters if input is meters, so divide by 1000 to get km
+          d_km = sqrt(dx**2 + dy**2) / 1000.0_wp
        end if
        
        B_s(i,j) = (prior_err_sd**2) * exp( -1.0_wp * d_km / spatial_correlation_len )
