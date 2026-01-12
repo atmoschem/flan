@@ -12,9 +12,6 @@ program main
   integer :: i, lon, lat ! Loop indices
   ! Dimensions (these should be read from NetCDF files or set as parameters)
   integer :: nlons, nlats
-  ! Footprint matrix H
-  real(wp), dimension(:,:), allocatable :: h
-
 ! --- Namelist Variables (with defaults) ---
 
   logical :: run_netcdf_test   = .true.
@@ -193,56 +190,9 @@ program main
         end if
 
        print *, "   Footprint ", i, " range (min, max): ", minval(foot_in), maxval(foot_in)
-      ! Calculate time index for this observation
-       ! TODO: Real time mapping. For now, we map sequentially or cyclically for testing.
-       ! We assume the footprint actually corresponds to a specific time block [k].
-       ! In a real 4D inversion, we would integrate foot * prior(t) -> sensitivity to x(t)
-       ! Here, we simplify: we assume this footprint sees the state vector at a specific time index
-       ! defined by the observation time.
-       
-       ! Dummy mapping for now: (i-1) mod n_time_blocks + 1
-       ! This spreads observations across the 240 time steps.
-       ! integer :: t_idx
-       ! t_idx = mod(i - 1, n_time_blocks) + 1
-       
-       ! BETTER: Just put it in the middle for testing, or use actual simple logic
-       
-       do j = 1, n_time_blocks
-          ! If we had exact time matching, we would only fill the block corresponding to the time.
-          ! For this task, let's assume 'foot_in' applies to 'prior_in' at ALL times weighted by... wait.
-          ! The footprint has a time dimension (backwards).
-          ! The standard H matrix approach for 4D-Var:
-          ! H maps x (state) to y (conc).
-          ! H_i = [ H_i(t=1), H_i(t=2), ... ]
-          ! If the particle was at grid cell g at time t, then sensitivity is nonzero.
-          ! Since our 'foot_in' is likely integrated or already processed, checking 'read_3d_netcdf' usage.
-          ! It reads 'foot_in' which is normally lat/lon/time_back.
-          ! But here we treat 'prior_in' as 3D (time_prior).
-          
-          ! Current logic: h_mat(i, :) = reshape(sum(foot_in * prior_in, dim=3), [n_grid])
-          ! This implies 'foot_in' and 'prior_in' match in 3rd dim (time).
-          ! If we want to solve for 240 time steps of SCALING FACTORS,
-          ! h_mat(i, :) needs to have length 240 * n_grid.
-          
-          ! We need to know which time block each slice of 'foot_in' corresponds to.
-          ! Assuming 'foot_in' 3rd dim aligns with 'prior_in' 3rd dim (e.g. 240 hours).
-          ! Then:
-          ! Observation i sees: \sum_t ( foot(x,y,t) * prior(x,y,t) * scalefactor(x,y,t) )
-          ! So H matrix element for (grid cell g, time t) is foot(g,t)*prior(g,t).
-          
-          ! WARNING: 'foot_in' dimensions vs 'prior_in' dimensions.
-          ! The code checked: if (any(shape(foot_in) /= shape(prior_in))) error.
-          ! So 'foot_in' has 240 time steps too!
-          
-          ! Therefore, H is block-sparse or rather structured.
-          ! H(i, (t-1)*n_grid + g) = foot_in(g_x, g_y, t) * prior_in(g_x, g_y, t)
-          
-          ! Let's implement this flat loop.
-       end do
-       
-       ! Optimized construction:
-       ! H is (1, n_grid*n_time) for single obs.
-       ! We just flatten foot_in * prior_in
+       ! Construct Row of H Matrix (Sensitivity):
+       ! H_i(t, g) = Footprint_i(t, g) * Prior_tot(t, g)
+       ! We flatten the 3D fields into the state-vector row.
        h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
 
        hsp(i) = sum(foot_in * prior_in)
