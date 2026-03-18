@@ -3,13 +3,13 @@ version = "0.5.0"
 license = "MIT"
 author = "Sergio Ibarra-Espinosa"
 maintainer = "zergioibarra@gmail.com"
-copyright = "Copyright 2025, Sergio Ibarra-Espinosa"
+copyright = "Copyright 2026, Sergio Ibarra-Espinosa"
 description = "A simple kalman filter."
 dependencies.openmp = "*"
 dependencies.netcdf = "*"
 dependencies.blas = "*"
 dependencies.stdlib =  { git="https://github.com/fortran-lang/stdlib", branch="stdlib-fpm"}
-
+dependencies.datetime = { git = "https://github.com/wavebitscientific/datetime-fortran" }
 dependencies.csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 
 [library]
