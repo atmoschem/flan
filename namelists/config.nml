@@ -30,6 +30,10 @@
    prior_sf_path = 'nc/scaling_factors_3d.nc'
 /
 
+&inversion_config
+   approach = 'surface_stilt'   ! 'surface_stilt' | 'surface_hysplit' | '3d_strato'
+/
+
 &test_config
   run_netcdf_test = .false.
   netcdf_filename = "matrix_data.nc"

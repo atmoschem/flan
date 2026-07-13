@@ -1,0 +1,40 @@
+
+&input_config
+   receptor_filename   = 'receptors/b2sap_boulder.csv'
+   prior_path   = '/path/to/reference_injection.nc'  ! or zeros dummy
+   prior_name = 'emission_mass'
+   prior_natural_path = ''
+   prior_natural_name = ''
+   prior_gas   = 'aerosol'
+   foot_lat   = 'foot1lat'
+   foot_lon   = 'foot1lon'
+   foot_name = 'foot1'
+/
+
+&output_config
+   hsp_output_file   = "hsp/hsp_output.txt"
+   sf_filename   = "nc/emission_mass.nc"
+   post_flux_filename = "nc/posterior_injection.nc"
+/
+
+&model_config
+   add_bg = .true.
+   obs_err_sd = 1.0e-13           ! POPS measurement noise [kg/m3]
+   model_err_sd = 5.0e-13         ! transport representation error [kg/m3]
+   prior_err_sd = 1.0e6           ! prior uncertainty on emission mass [kg]
+   spatial_correlation_len = 200.0 ! km — broader for stratosphere
+   temporal_correlation_len = 24.0 ! hours
+   time_resolution_hours = 3
+   coord_units = 'degrees'
+   use_prior_sf = .false.
+   prior_sf_path = 'nc/scaling_factors_3d.nc'
+/
+
+&inversion_config
+   approach = '3d_strato'   ! transfer coefficient matrix, state = emission mass [kg]
+/
+
+&test_config
+  run_netcdf_test = .false.
+  netcdf_filename = "matrix_data.nc"
+/

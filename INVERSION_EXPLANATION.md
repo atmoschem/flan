@@ -2,9 +2,34 @@
 
 > **Disclosure**: While the implementation logic leverages standard atmospheric inverse modeling theory, parts of this theoretical explanation and code structure were developed with the assistance of Google Antigravity.
 
-This document details the **4D Analytical Inversion** system implemented in FLAN. It covers the mathematical foundation, the memory-efficient implementation (Implicit Kronecker), and the operational strategy for real-time estimation.
+This document details the **4D Analytical Inversion** system implemented in FLAN. It covers the mathematical foundation, the memory-efficient implementation (Implicit Kronecker), the operational strategy for real-time estimation, and the **approach selector** for different source geometries.
 
 ---
+
+## 0. Approach Selector (NEW in v0.6.0)
+
+FLAN now supports an explicit `approach` selector in the `&inversion_config` namelist:
+
+| `approach` | Description | State x | H matrix | x_a default |
+|---|---|---|---|---|
+| `surface_stilt` | STILT ichem=8 footprints × prior flux | Scaling factors | footprint × prior | 1.0 |
+| `surface_hysplit` | Standard HYSPLIT sensitivity at surface × prior flux | Scaling factors | footprint × prior | 1.0 |
+| `3d_strato` | Transfer coefficient matrix for SAI/volcanic detection | Emission mass [kg] | footprint (raw) | 0.0 |
+
+Usage in `namelists/config.nml`:
+
+```
+&inversion_config
+   approach = '3d_strato'
+/
+```
+
+For `3d_strato`:
+- The footprint NetCDF is the raw 3D backward sensitivity from HYSPLIT (units: (kg/m³)/kg)
+- No prior multiplication is applied — H = T directly
+- The state vector x represents emission mass in kg per grid cell
+- Prior x_a defaults to 0 (zero emission prior)
+- See `namelists/config_sai.nml` for a complete SAI inverter configuration
 
 ## 1. Theoretical Foundation
 

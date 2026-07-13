@@ -38,6 +38,7 @@ program main
   character(len=32)  :: coord_units = "degrees"
   logical            :: use_prior_sf = .false.
   character(len=256) :: prior_sf_path = "nc/scaling_factors_3d.nc"
+  character(len=32)  :: approach = "surface_stilt"   ! 'surface_stilt' | 'surface_hysplit' | '3d_strato'
 
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
@@ -88,6 +89,7 @@ program main
   namelist /model_config/ add_bg, obs_err_sd, model_err_sd, prior_err_sd, &
        & spatial_correlation_len, temporal_correlation_len, time_resolution_hours, &
      & coord_units, use_prior_sf, prior_sf_path
+  namelist /inversion_config/ approach
   namelist /test_config/ run_netcdf_test, netcdf_filename
 
   print *, "---------------------------------------------------"
@@ -103,6 +105,8 @@ program main
   read(unit=10, nml=model_config, iostat=ios)
   rewind(10)
   read(unit=10, nml=test_config, iostat=ios)
+  rewind(10)
+  read(unit=10, nml=inversion_config, iostat=ios)
 
   print *, "input_config: receptor: " // trim(receptor_filename)
   print *, "input_config: prior: " // trim(prior_path)
@@ -112,7 +116,8 @@ program main
   print *, "model_config: time_res_hours: ", time_resolution_hours 
   print *, " model_config: coord_units: ", trim(coord_units)
   print *, " model_config: use_prior_sf: ", use_prior_sf
-  if (use_prior_sf) print *, " model_config: prior_sf_path: ", trim(prior_sf_path)
+  if (use_prior_sf) print *, " model_config: prior_sf_path: ", trim(prior_sf_path) 
+  print *, "inversion_config: approach: " // trim(approach)
   
   if (trim(coord_units) == 'meters') then
      print *, " !!! WARNING: 'meters' selected. Coords in NetCDF MUST be in METERS. Euclidean distance will be used. !!!"
@@ -206,7 +211,11 @@ program main
         deallocate(sf_old)
      end block
   else
-     xa = 1.0_wp
+     if (trim(approach) == '3d_strato') then
+        xa = 0.0_wp     ! Zero emission prior for stratospheric injection
+     else
+        xa = 1.0_wp     ! Prior scaling factors = 1.0 for surface flux
+     end if
   end if
 
   allocate(h_mat(n_obs, n_state))
@@ -222,7 +231,7 @@ program main
         call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
         call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
 
-        if (any(shape(foot_in) /= shape(prior_in))) then
+        if (trim(approach) /= '3d_strato' .and. any(shape(foot_in) /= shape(prior_in))) then
           print *, "ERROR: Dimension mismatch between Footprint and Prior!"
           print *, "Foot: ", shape(foot_in)
           print *, "Prior: ", shape(prior_in)
@@ -231,9 +240,18 @@ program main
 
        print *, "   Footprint ", i, " range (min, max): ", minval(foot_in), maxval(foot_in)
        ! Construct Row of H Matrix (Sensitivity):
-       ! H_i(t, g) = Footprint_i(t, g) * Prior_tot(t, g)
-       ! We flatten the 3D fields into the state-vector row.
-       h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
+       ! Approach-dependent: surface_stilt/surface_hysplit multiply by prior flux;
+       ! 3d_strato uses raw sensitivity as transfer coefficient matrix.
+       select case(trim(approach))
+       case('3d_strato')
+         ! Transfer coefficient matrix: H = footprint sensitivity directly.
+         ! State x represents emission mass [kg].
+         h_mat(i, :) = reshape(foot_in, [n_state])
+       case default
+         ! Surface flux inversion (stilt or hysplit scheme):
+         ! H = footprint × prior_flux; state x = scaling factors.
+         h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
+       end select
 
        ! Calculate modeled enhancement: y_prior = H * xa
        hsp(i) = dot_product(h_mat(i, :), xa)
