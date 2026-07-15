@@ -8,6 +8,7 @@ module io_manager
 
   ! CORRECT: Make both subroutines public
   public :: write_1d_netcdf, write_2d_netcdf, write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, read_3d_netcdf
+  public :: read_4d_netcdf, inquire_ndims
   public :: example_csv_reader
   public :: logical_to_string, write_1d_text
 
@@ -257,6 +258,98 @@ contains
     status = nf90_close(ncid)
     call check(status)
   end subroutine read_3d_netcdf
+
+
+  ! ----------------------------------------------------------
+  !  inquire_ndims — return the number of dimensions of a
+  !  NetCDF variable.  Used to branch between 3D (STILT-style)
+  !  and 4D (HYSPLIT-strato) footprint files.
+  ! ----------------------------------------------------------
+  subroutine inquire_ndims(filename, varname, ndims)
+    character(len=*), intent(in)  :: filename, varname
+    integer,           intent(out) :: ndims
+
+    integer :: ncid, var_id, status
+
+    status = nf90_open(filename, nf90_nowrite, ncid)
+    call check(status)
+
+    status = nf90_inq_varid(ncid, varname, var_id)
+    call check(status)
+
+    status = nf90_inquire_variable(ncid, var_id, ndims=ndims)
+    call check(status)
+
+    status = nf90_close(ncid)
+    call check(status)
+  end subroutine inquire_ndims
+
+
+  ! ----------------------------------------------------------
+  !  read_4d_netcdf — read a 4D variable (lon, lat, z, time)
+  !  from a NetCDF file.  Used for HYSPLIT-strato footprints
+  !  that preserve the vertical dimension.
+  ! ----------------------------------------------------------
+  subroutine read_4d_netcdf(filename, data_matrix, varname)
+    character(len=*), intent(in) :: filename
+    real(wp), allocatable, intent(inout) :: data_matrix(:,:,:,:)
+    character(len=*), intent(in) :: varname
+
+    integer :: ncid, var_id, status
+    integer :: dimids(4), dim_sizes(4)
+    integer :: ndims
+
+    ! 1. Open the file for reading.
+    status = nf90_open(filename, nf90_nowrite, ncid)
+    call check(status)
+
+    ! 2. Get the ID of the variable by its name.
+    status = nf90_inq_varid(ncid, varname, var_id)
+    call check(status)
+
+    ! Check number of dimensions
+    status = nf90_inquire_variable(ncid, var_id, ndims=ndims)
+    call check(status)
+
+    if (ndims /= 4) then
+        print *, "Error: Variable ", trim(varname), " has ", ndims, " dimensions, expected 4"
+        stop "Dimension mismatch"
+    end if
+
+    ! Get dimensions from file
+    status = nf90_inquire_variable(ncid, var_id, dimids=dimids)
+    call check(status)
+    status = nf90_inquire_dimension(ncid, dimids(1), len=dim_sizes(1))
+    call check(status)
+    status = nf90_inquire_dimension(ncid, dimids(2), len=dim_sizes(2))
+    call check(status)
+    status = nf90_inquire_dimension(ncid, dimids(3), len=dim_sizes(3))
+    call check(status)
+    status = nf90_inquire_dimension(ncid, dimids(4), len=dim_sizes(4))
+    call check(status)
+
+    ! Check if reallocation is needed
+    if (allocated(data_matrix)) then
+       if (size(data_matrix, 1) /= dim_sizes(1) .or. &
+           size(data_matrix, 2) /= dim_sizes(2) .or. &
+           size(data_matrix, 3) /= dim_sizes(3) .or. &
+           size(data_matrix, 4) /= dim_sizes(4)) then
+           deallocate(data_matrix)
+       end if
+    end if
+
+    ! Allocate if not allocated
+    if (.not. allocated(data_matrix)) then
+      allocate(data_matrix(dim_sizes(1), dim_sizes(2), dim_sizes(3), dim_sizes(4)))
+    end if
+
+    ! 3. Read the data from the variable into the array.
+    status = nf90_get_var(ncid, var_id, data_matrix)
+    call check(status)
+
+    status = nf90_close(ncid)
+    call check(status)
+  end subroutine read_4d_netcdf
 
 
 ! --- Example CSV Reader using csv-fortran ---

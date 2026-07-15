@@ -26,6 +26,7 @@
    temporal_correlation_len = 24.0 ! hours
    time_resolution_hours = 3
    coord_units = 'degrees'
+   surface_layer_index = 1  ! z-index for surface extraction (1-based)
    use_prior_sf = .false.
    prior_sf_path = 'nc/scaling_factors_3d.nc'
 /

@@ -4,7 +4,8 @@ program main
   use linear_algebra, only: invert_matrix, diag
   use io_manager, only: write_1d_netcdf, write_2d_netcdf, &
   &write_3d_netcdf, read_1d_netcdf, read_2d_netcdf, &
-  &read_3d_netcdf, example_csv_reader, logical_to_string, write_1d_text
+  &read_3d_netcdf, read_4d_netcdf, inquire_ndims, &
+  &example_csv_reader, logical_to_string, write_1d_text
 
   implicit none
 
@@ -39,9 +40,11 @@ program main
   logical            :: use_prior_sf = .false.
   character(len=256) :: prior_sf_path = "nc/scaling_factors_3d.nc"
   character(len=32)  :: approach = "surface_stilt"   ! 'surface_stilt' | 'surface_hysplit' | '3d_strato'
+  integer            :: surface_layer_index = 1       ! z-index to extract for surface approaches (1-based)
 
 
   real(wp), dimension(:,:,:), allocatable :: foot_in
+  real(wp), dimension(:,:,:,:), allocatable :: foot_in_4d   ! 4D HYSPLIT-strato footprint (lon,lat,z,time)
   real(wp), dimension(:), allocatable :: lats, lons
   real(wp), dimension(:,:,:), allocatable :: prior_in
   real(wp), dimension(:,:), allocatable :: B_s, B_t ! Covariance blocks
@@ -59,6 +62,8 @@ program main
   real(wp), dimension(:,:,:), allocatable :: sf_map_3d
   integer :: n_grid, n_obs, n_time
   integer :: n_time_blocks, n_state
+  integer :: foot_ndims          ! 3 or 4, detected from NetCDF footprint variable
+  integer :: n_alt               ! number of vertical levels in 4D footprints
   real(wp), dimension(:), allocatable :: time_blocks_start ! Start hour of each block relative to simulation start
   real(wp), dimension(:,:), allocatable :: dist_mat ! Spatial distance matrix
   real(wp), dimension(:,:), allocatable :: time_dist_mat ! Temporal distance matrix
@@ -88,7 +93,7 @@ program main
   integer :: j_loop
   namelist /model_config/ add_bg, obs_err_sd, model_err_sd, prior_err_sd, &
        & spatial_correlation_len, temporal_correlation_len, time_resolution_hours, &
-     & coord_units, use_prior_sf, prior_sf_path
+     & coord_units, use_prior_sf, prior_sf_path, surface_layer_index
   namelist /inversion_config/ approach
   namelist /test_config/ run_netcdf_test, netcdf_filename
 
@@ -115,6 +120,7 @@ program main
   print *, "model_config: temp_corr: ", temporal_correlation_len
   print *, "model_config: time_res_hours: ", time_resolution_hours 
   print *, " model_config: coord_units: ", trim(coord_units)
+  print *, " model_config: surface_layer_index: ", surface_layer_index
   print *, " model_config: use_prior_sf: ", use_prior_sf
   if (use_prior_sf) print *, " model_config: prior_sf_path: ", trim(prior_sf_path) 
   print *, "inversion_config: approach: " // trim(approach)
@@ -176,9 +182,54 @@ program main
   allocate(hsp(n_obs))
   hsp = 0.0_wp
 
-  n_grid = size(prior_in, 1) * size(prior_in, 2)
-  ! Set time blocks from prior dimensions (e.g. 240 for 30 days of 3-hourly)
-  n_time_blocks = size(prior_in, 3) 
+  ! --- Determine footprint dimensionality from first receptor ---
+  call inquire_ndims(trim(receptor_path(1)), foot_name, foot_ndims)
+  print *, "Footprint dimensionality: ", foot_ndims
+
+  n_alt = 1  ! default (3D footprints have no vertical dimension)
+  if (foot_ndims == 4) then
+     ! Peek at the first footprint to get vertical/time dimensions
+     call read_4d_netcdf(trim(receptor_path(1)), foot_in_4d, foot_name)
+     n_alt = size(foot_in_4d, 3)
+     n_time_blocks = size(foot_in_4d, 4)
+     print *, "  4D mode: n_alt = ", n_alt, ", n_time_blocks = ", n_time_blocks
+     deallocate(foot_in_4d)
+  else if (foot_ndims == 3) then
+     ! Peek at the first footprint for time dimension
+     call read_3d_netcdf(trim(receptor_path(1)), foot_in, foot_name)
+     n_time_blocks = size(foot_in, 3)
+     print *, "  3D mode: n_time_blocks = ", n_time_blocks
+     deallocate(foot_in)
+  else
+     print *, "ERROR: Unknown footprint dimensionality: ", foot_ndims
+     stop
+  end if
+
+  ! --- Compute state vector size ---
+  if (trim(approach) == '3d_strato') then
+     ! For 3d_strato, grid comes from footprint, not prior.
+     ! With 4D footprints, n_grid includes the vertical dimension.
+     ! TODO: generalize B = B_t ⊗ B_z ⊗ B_s for proper vertical correlation.
+     if (foot_ndims == 4) then
+        ! Use prior_in dimensions as proxy for lon/lat if available; otherwise we
+        ! need to read the footprint again.  For now, prior_in is always read first.
+        n_grid = size(prior_in, 1) * size(prior_in, 2) * n_alt
+     else
+        n_grid = size(prior_in, 1) * size(prior_in, 2)
+     end if
+     ! n_time_blocks already set from footprint inspection above
+     print *, "  3d_strato: n_grid = ", n_grid, &
+              " (", size(prior_in,1), "x", size(prior_in,2), &
+              merge(" x 1   "," x ??? ", foot_ndims == 3), ")"
+  else
+     ! Surface approaches: grid and time must match prior_in
+     n_grid = size(prior_in, 1) * size(prior_in, 2)
+     n_time_blocks = size(prior_in, 3)
+     if (foot_ndims == 4) then
+        print *, "  4D surface mode: will extract z-layer ", surface_layer_index
+     end if
+  end if
+
   n_state = n_grid * n_time_blocks
   
   if (n_state > 30000) then
@@ -224,37 +275,81 @@ program main
       print *, "--- Step 1: Processing Footprints (Constructing H) ---"
      do i = 1, size(receptor_path)
 
-        print *, "Processing footprint ", i, ": ", trim(receptor_path(i))
+        print *, "Processing footprint ", i, " : ", trim(receptor_path(i))
 
-        ! Footprints
-        call read_3d_netcdf(trim(receptor_path(i)), foot_in, foot_name)
-        call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
-        call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
+        ! Detect dimensionality of THIS footprint (may differ from first)
+        call inquire_ndims(trim(receptor_path(i)), foot_name, foot_ndims)
+        print *, "   ndims = ", foot_ndims
 
-        if (trim(approach) /= '3d_strato' .and. any(shape(foot_in) /= shape(prior_in))) then
-          print *, "ERROR: Dimension mismatch between Footprint and Prior!"
-          print *, "Foot: ", shape(foot_in)
-          print *, "Prior: ", shape(prior_in)
-          stop
+        if (foot_ndims == 4) then
+           ! ===== 4D footprint (lon, lat, z, time) — HYSPLIT-strato =====
+           call read_4d_netcdf(trim(receptor_path(i)), foot_in_4d, foot_name)
+           call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
+           call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
+
+           print *, "   4D footprint range: ", minval(foot_in_4d), maxval(foot_in_4d)
+
+           select case(trim(approach))
+           case('3d_strato')
+              ! Full 3D spatial transfer coefficient matrix.
+              ! Collapse z into the grid dimension: n_grid = n_lon * n_lat * n_alt.
+              ! TODO: Generalize B = B_t ⊗ B_z ⊗ B_s for proper vertical correlation.
+              h_mat(i, :) = reshape(foot_in_4d, [n_state])
+
+           case default
+              ! Surface approaches: extract the surface z-layer → 3D footprint.
+              if (allocated(foot_in)) deallocate(foot_in)
+              allocate(foot_in(size(foot_in_4d,1), size(foot_in_4d,2), size(foot_in_4d,4)))
+              foot_in(:,:,:) = foot_in_4d(:,:,surface_layer_index,:)
+              print *, "   Extracted z-layer ", surface_layer_index, &
+                       " → 3D shape: ", shape(foot_in)
+
+              if (any(shape(foot_in) /= shape(prior_in))) then
+                 print *, "ERROR: Dimension mismatch between Footprint and Prior!"
+                 print *, "Foot: ", shape(foot_in)
+                 print *, "Prior: ", shape(prior_in)
+                 stop
+              end if
+
+              print *, "   Footprint range (min, max): ", minval(foot_in), maxval(foot_in)
+              h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
+           end select
+
+           deallocate(foot_in_4d)
+
+        else if (foot_ndims == 3) then
+           ! ===== 3D footprint (lon, lat, time) — STILT or pre-processed =====
+           call read_3d_netcdf(trim(receptor_path(i)), foot_in, foot_name)
+           call read_1d_netcdf(trim(receptor_path(i)), lats, foot_lat)
+           call read_1d_netcdf(trim(receptor_path(i)), lons, foot_lon)
+
+           if (trim(approach) /= '3d_strato' .and. any(shape(foot_in) /= shape(prior_in))) then
+              print *, "ERROR: Dimension mismatch between Footprint and Prior!"
+              print *, "Foot: ", shape(foot_in)
+              print *, "Prior: ", shape(prior_in)
+              stop
+           end if
+
+           print *, "   Footprint range (min, max): ", minval(foot_in), maxval(foot_in)
+
+           select case(trim(approach))
+           case('3d_strato')
+              ! Transfer coefficient matrix: H = footprint sensitivity directly.
+              ! State x represents emission mass [kg].
+              h_mat(i, :) = reshape(foot_in, [n_state])
+           case default
+              ! Surface flux inversion (stilt or hysplit scheme):
+              ! H = footprint × prior_flux; state x = scaling factors.
+              h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
+           end select
+
+        else
+           print *, "ERROR: Unknown footprint dimensionality: ", foot_ndims
+           stop
         end if
 
-       print *, "   Footprint ", i, " range (min, max): ", minval(foot_in), maxval(foot_in)
-       ! Construct Row of H Matrix (Sensitivity):
-       ! Approach-dependent: surface_stilt/surface_hysplit multiply by prior flux;
-       ! 3d_strato uses raw sensitivity as transfer coefficient matrix.
-       select case(trim(approach))
-       case('3d_strato')
-         ! Transfer coefficient matrix: H = footprint sensitivity directly.
-         ! State x represents emission mass [kg].
-         h_mat(i, :) = reshape(foot_in, [n_state])
-       case default
-         ! Surface flux inversion (stilt or hysplit scheme):
-         ! H = footprint × prior_flux; state x = scaling factors.
-         h_mat(i, :) = reshape(foot_in * prior_in, [n_state])
-       end select
-
-       ! Calculate modeled enhancement: y_prior = H * xa
-       hsp(i) = dot_product(h_mat(i, :), xa)
+        ! Calculate modeled enhancement: y_prior = H * xa
+        hsp(i) = dot_product(h_mat(i, :), xa)
      end do
 
    print *, "H matrix dimensions (n_obs, n_grid): ", shape(h_mat)
